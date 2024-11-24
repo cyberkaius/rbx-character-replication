@@ -5,6 +5,7 @@ export type Snapshots = {
 
 export type Frame = {
     frameNumber: number,
+    timestamp: number,
     cframe: CFrame
 }
 
@@ -24,6 +25,7 @@ end
 function Snapshots.addFrame(self: Snapshots, frame: number, data: CFrame)
     table.insert(self.log, {
         frameNumber = frame,
+        timestamp = os.clock(),
         cframe = data
     })
 

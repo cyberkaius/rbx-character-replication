@@ -54,15 +54,15 @@ RunService.Heartbeat:Connect(function()
 		end
 
 		if (#cframes == #roots) and (#cframes > 0) and (#roots > 0) then
-			-- Move characters on server
-			Workspace:BulkMoveTo(roots, cframes)
-
 			-- Broadcast replication to all clients
 			Zap.BroadcastReplication.FireAll({
 				frame = currentFrame,
 				roots = roots,
 				cframes = cframes
 			})
+
+			-- Move characters on serve
+			--Workspace:BulkMoveTo(roots, cframes)
 		end
 
 		currentFrame += 1
