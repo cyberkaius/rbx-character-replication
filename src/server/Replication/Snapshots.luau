@@ -1,4 +1,7 @@
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
 
 local Snapshots = {}
 
@@ -40,7 +43,7 @@ function Snapshots.addFrame(root: BasePart, frame: number, data: CFrame)
             cframe = data
         })
 
-        if #log > 40 then
+        if #log > Interpolation.frameRate then
             table.remove(log, 1)
         end
     end

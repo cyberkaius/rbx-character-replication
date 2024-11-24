@@ -1,7 +1,9 @@
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Zap = require(script.Parent.Zap)
+local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
 
 local Snapshots = require(script.Snapshots)
 
@@ -29,11 +31,10 @@ Zap.RequestReplication.SetCallback(function(player, data)
 	local character = player.Character :: any
 	local root = character and character.HumanoidRootPart :: BasePart
 
-	-- Only keep previous 40 snapshots
 	Snapshots.addFrame(root, data.frameNumber, data.cframe)
 end)
 
-local replicationRate = 1/40
+local replicationRate = 1 / Interpolation.frameRate
 local lastTick = os.clock()
 
 RunService.Heartbeat:Connect(function()
@@ -42,7 +43,7 @@ RunService.Heartbeat:Connect(function()
 
 		for root, list in pairs(Snapshots.getLogs()) do
 			local lastSnapshot = Snapshots.getLatestFrame(root)
-			
+
 			-- In future don't send the whole CFrame as it's really slow
 			if lastSnapshot then
 				table.insert(map, {

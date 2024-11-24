@@ -1,8 +1,10 @@
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Zap = require(script.Parent.Zap)
+local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -10,8 +12,7 @@ local root = character and character:FindFirstChild("HumanoidRootPart")
 
 root.Anchored = false
 
-local frameRate = 40
-local replicationRate = 1 / frameRate
+local replicationRate = 1 / Interpolation.frameRate
 
 local lastTick = os.clock()
 local currentFrame = 1
@@ -25,7 +26,7 @@ RunService.PostSimulation:Connect(function()
 
         currentFrame += 1
 
-        if currentFrame > frameRate then
+        if currentFrame > Interpolation.frameRate then
             currentFrame = 1
         end
     end
