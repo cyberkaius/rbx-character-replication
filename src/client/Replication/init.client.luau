@@ -5,6 +5,7 @@ local Workspace = game:GetService("Workspace")
 
 local Zap = require(script.Parent.Zap)
 local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
+local Snapshots = require(ReplicatedStorage.Shared.Replication.Snapshots)
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -12,44 +13,42 @@ local root = character and character:FindFirstChild("HumanoidRootPart")
 
 root.Anchored = false
 
+local snapshotLog = Snapshots.new(Interpolation.frameRate / 2)
+
 local replicationRate = 1 / Interpolation.frameRate
 
 local lastTick = os.clock()
-local currentFrame = 1
 
+-- Replicate position to server
 RunService.PostSimulation:Connect(function()
-    local deltaTime = os.clock() - lastTick
-
-    if deltaTime >= replicationRate then
+    if os.clock() - lastTick >= replicationRate then
         lastTick = os.clock()
 
-        print(1 / deltaTime)
-
         Zap.RequestReplication.Fire({
-            frameNumber = currentFrame,
             cframe = root.CFrame,
         })
-
-        currentFrame += 1
-
-        if currentFrame > Interpolation.frameRate then
-            currentFrame = 1
-        end
     end
 end)
 
+-- Update other players positions locally
 Zap.BroadcastReplication.SetCallback(function(data)
     local cframes = {}
     local roots = {}
 
-    for i, v in pairs(data) do
-        if v.root ~= root then
-            table.insert(cframes, v.cframe)
-            table.insert(roots, v.root)
+    local myCFrame = nil :: CFrame?
+
+    for i, v in pairs(data.roots) do
+        if v ~= root then
+            myCFrame = data.cframes[i]
         end
     end
 
-    if #cframes > 0 and #roots > 0 then
-        Workspace:BulkMoveTo(roots, cframes)
+    if #data.cframes == #data.roots then
+        Workspace:BulkMoveTo({}, {})
+    end
+
+    -- Add new snapshot to local snapshot list
+    if myCFrame then
+        Snapshots.addFrame(snapshotLog, data.frame, myCFrame)
     end
 end)

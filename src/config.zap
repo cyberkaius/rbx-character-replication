@@ -9,7 +9,6 @@ event RequestReplication = {
 	type: Unreliable,
 	call: SingleAsync,
 	data: struct {  
-		frameNumber: u8,
 		cframe: CFrame,
 	},
 }
@@ -18,8 +17,9 @@ event BroadcastReplication = {
 	from: Server,
 	type: Unreliable,
 	call: SingleAsync,
-	data: struct {  
-		root: Instance(BasePart),
-		cframe: CFrame, 
-	}[1 .. 31]
+	data: struct {
+		frame: u8,
+		cframes: CFrame[1 .. 31],
+		roots: Instance(BasePart)[1 .. 31],
+	}
 }
