@@ -22,21 +22,35 @@ local lastTick = os.clock()
 -- Create a snapshot buffer of 2 for every player
 local playerSnapshots = {} :: {[BasePart]: Snapshots.Snapshots}
 
-Players.PlayerAdded:Connect(function(player: Player)
-    player.CharacterAdded:Connect(function(character: Model)
-        local otherRoot = character:WaitForChild("HumanoidRootPart") :: BasePart
+local function characterAdded(newPlayer: Player, char: Model)
+    print("Character added")
+    local otherRoot = character:WaitForChild("HumanoidRootPart") :: BasePart
 
-		if (not otherRoot == root) and (not playerSnapshots[root]) then
-            playerSnapshots[otherRoot] = Snapshots.new(2)
-		end
+    if playerSnapshots[root] == nil then
+        playerSnapshots[otherRoot] = Snapshots.new(2)
+    end    
+end
+
+for i, v in pairs(Players:GetPlayers()) do
+    if v ~= player then
+        v.CharacterAdded:Connect(function(char)
+            characterAdded(v, char)
+        end)    
+    end
+end
+
+Players.PlayerAdded:Connect(function(newPlayer)
+    if newPlayer == player then
+        return
+    end
+
+    newPlayer.CharacterAdded:Connect(function(char)
+        characterAdded(player, char)
     end)
 
-    player.CharacterRemoving:Connect(function(character: Model)
+    newPlayer.CharacterRemoving:Connect(function(character: Model)
         local otherRoot = character:WaitForChild("HumanoidRootPart") :: BasePart
-
-        if not otherRoot == root then
-            playerSnapshots[otherRoot] = nil
-        end
+        playerSnapshots[otherRoot] = nil
     end)
 end)
 
@@ -48,35 +62,41 @@ RunService.PostSimulation:Connect(function()
         Zap.RequestReplication.Fire({
             cframe = root.CFrame,
         })
+
+        -- Interpolate other characters
+        local roots = {}
+        local cframes = {}
+
+        for i, v in pairs(playerSnapshots) do
+            local currentSnapshot = Snapshots.getLatestFrame(v)
+
+            if currentSnapshot then
+                local previousSnapshot = Snapshots.getPreviousFrame(v) or currentSnapshot
+
+                local newCFrame = Interpolation.getCFrame(previousSnapshot, currentSnapshot)
+
+                table.insert(roots, i)
+                table.insert(cframes, newCFrame)
+            end
+        end
+
+        if #roots == #cframes then
+            Workspace:BulkMoveTo(roots, cframes)
+        end
     end
 end)
 
--- Add frames of every player and interpolate their positions
+-- Add all the snapshots to their respective buffers
 Zap.BroadcastReplication.SetCallback(function(data)
-    local cframes = {}
-    local roots = {}
-
-    for i, v in pairs(data.roots) do
-        if v ~= root then
-            Snapshots.addFrame(playerSnapshots[v], data.frame, data.cframes[i])
-
-            local currentSnapshot = Snapshots.getLatestFrame(playerSnapshots[v])
-            local previousSnapshot = Snapshots.getPreviousFrame(playerSnapshots[v])
-
-            local cframeToAdd = data.cframes[i]
-
-            if currentSnapshot and previousSnapshot then
-                cframeToAdd = Interpolation.getCFrame(previousSnapshot, currentSnapshot)
-            end
-
-            table.insert(roots, v)
-            table.insert(cframes, cframeToAdd)
+    for i, v in pairs(data.map) do
+        if v.root == root then
+            Snapshots.addFrame(snapshotLog, data.frame, v.cframe)
         else
-            Snapshots.addFrame(snapshotLog, data.frame, data.cframes[i])
-        end
-    end
+            if playerSnapshots[v.root] then
+                Snapshots.addFrame(playerSnapshots[v.root], data.frame, v.cframe)
 
-    if #data.cframes == #data.roots then
-        Workspace:BulkMoveTo(cframes, roots)
+                print(Snapshots.getLatestFrame(playerSnapshots[v.root]))
+            end
+        end
     end
 end)

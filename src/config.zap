@@ -19,7 +19,9 @@ event BroadcastReplication = {
 	call: SingleAsync,
 	data: struct {
 		frame: u8,
-		cframes: CFrame[1 .. 31],
-		roots: Instance(BasePart)[1 .. 31],
+		map: struct {
+			root: Instance(BasePart),
+			cframe: CFrame
+		}[1 .. 31]
 	}
 }

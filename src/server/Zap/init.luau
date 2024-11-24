@@ -207,45 +207,39 @@ local returns = {
 	BroadcastReplication = {
 		Fire = function(Player: Player, Value: ({
 			frame: (number),
-			cframes: ({ (CFrame) }),
-			roots: ({ (BasePart) }),
+			map: ({ ({
+				root: (BasePart),
+				cframe: (CFrame),
+			}) }),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
-			local len_1 = #Value.cframes
+			local len_1 = #Value.map
 			assert(len_1 >= 1)
 			assert(len_1 <= 31)
 			alloc(2)
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
-				local val_1 = Value.cframes[i_1]
-				local axis_1, angle_1 = val_1:ToAxisAngle()
+				local val_1 = Value.map[i_1]
+				assert(val_1.root:IsA("BasePart"))
+				table.insert(outgoing_inst, val_1.root)
+				local axis_1, angle_1 = val_1.cframe:ToAxisAngle()
 				axis_1 = axis_1 * angle_1
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.X)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.X)
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.Y)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.Y)
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.Z)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.Z)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.X)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Y)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Z)
-			end
-			local len_2 = #Value.roots
-			assert(len_2 >= 1)
-			assert(len_2 <= 31)
-			alloc(2)
-			buffer.writeu16(outgoing_buff, outgoing_apos, len_2)
-			for i_2 = 1, len_2 do
-				local val_2 = Value.roots[i_2]
-				assert(val_2:IsA("BasePart"))
-				table.insert(outgoing_inst, val_2)
 			end
 			local buff = buffer.create(outgoing_used)
 			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)
@@ -253,45 +247,39 @@ local returns = {
 		end,
 		FireAll = function(Value: ({
 			frame: (number),
-			cframes: ({ (CFrame) }),
-			roots: ({ (BasePart) }),
+			map: ({ ({
+				root: (BasePart),
+				cframe: (CFrame),
+			}) }),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
-			local len_1 = #Value.cframes
+			local len_1 = #Value.map
 			assert(len_1 >= 1)
 			assert(len_1 <= 31)
 			alloc(2)
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
-				local val_1 = Value.cframes[i_1]
-				local axis_1, angle_1 = val_1:ToAxisAngle()
+				local val_1 = Value.map[i_1]
+				assert(val_1.root:IsA("BasePart"))
+				table.insert(outgoing_inst, val_1.root)
+				local axis_1, angle_1 = val_1.cframe:ToAxisAngle()
 				axis_1 = axis_1 * angle_1
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.X)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.X)
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.Y)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.Y)
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.Z)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.Z)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.X)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Y)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Z)
-			end
-			local len_2 = #Value.roots
-			assert(len_2 >= 1)
-			assert(len_2 <= 31)
-			alloc(2)
-			buffer.writeu16(outgoing_buff, outgoing_apos, len_2)
-			for i_2 = 1, len_2 do
-				local val_2 = Value.roots[i_2]
-				assert(val_2:IsA("BasePart"))
-				table.insert(outgoing_inst, val_2)
 			end
 			local buff = buffer.create(outgoing_used)
 			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)
@@ -299,45 +287,39 @@ local returns = {
 		end,
 		FireExcept = function(Except: Player, Value: ({
 			frame: (number),
-			cframes: ({ (CFrame) }),
-			roots: ({ (BasePart) }),
+			map: ({ ({
+				root: (BasePart),
+				cframe: (CFrame),
+			}) }),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
-			local len_1 = #Value.cframes
+			local len_1 = #Value.map
 			assert(len_1 >= 1)
 			assert(len_1 <= 31)
 			alloc(2)
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
-				local val_1 = Value.cframes[i_1]
-				local axis_1, angle_1 = val_1:ToAxisAngle()
+				local val_1 = Value.map[i_1]
+				assert(val_1.root:IsA("BasePart"))
+				table.insert(outgoing_inst, val_1.root)
+				local axis_1, angle_1 = val_1.cframe:ToAxisAngle()
 				axis_1 = axis_1 * angle_1
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.X)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.X)
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.Y)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.Y)
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.Z)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.Z)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.X)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Y)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Z)
-			end
-			local len_2 = #Value.roots
-			assert(len_2 >= 1)
-			assert(len_2 <= 31)
-			alloc(2)
-			buffer.writeu16(outgoing_buff, outgoing_apos, len_2)
-			for i_2 = 1, len_2 do
-				local val_2 = Value.roots[i_2]
-				assert(val_2:IsA("BasePart"))
-				table.insert(outgoing_inst, val_2)
 			end
 			local buff = buffer.create(outgoing_used)
 			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)
@@ -349,45 +331,39 @@ local returns = {
 		end,
 		FireList = function(List: { Player }, Value: ({
 			frame: (number),
-			cframes: ({ (CFrame) }),
-			roots: ({ (BasePart) }),
+			map: ({ ({
+				root: (BasePart),
+				cframe: (CFrame),
+			}) }),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
-			local len_1 = #Value.cframes
+			local len_1 = #Value.map
 			assert(len_1 >= 1)
 			assert(len_1 <= 31)
 			alloc(2)
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
-				local val_1 = Value.cframes[i_1]
-				local axis_1, angle_1 = val_1:ToAxisAngle()
+				local val_1 = Value.map[i_1]
+				assert(val_1.root:IsA("BasePart"))
+				table.insert(outgoing_inst, val_1.root)
+				local axis_1, angle_1 = val_1.cframe:ToAxisAngle()
 				axis_1 = axis_1 * angle_1
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.X)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.X)
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.Y)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.Y)
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.Z)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.Z)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.X)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Y)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Z)
-			end
-			local len_2 = #Value.roots
-			assert(len_2 >= 1)
-			assert(len_2 <= 31)
-			alloc(2)
-			buffer.writeu16(outgoing_buff, outgoing_apos, len_2)
-			for i_2 = 1, len_2 do
-				local val_2 = Value.roots[i_2]
-				assert(val_2:IsA("BasePart"))
-				table.insert(outgoing_inst, val_2)
 			end
 			local buff = buffer.create(outgoing_used)
 			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)
@@ -397,45 +373,39 @@ local returns = {
 		end,
 		FireSet = function(Set: { [Player]: true }, Value: ({
 			frame: (number),
-			cframes: ({ (CFrame) }),
-			roots: ({ (BasePart) }),
+			map: ({ ({
+				root: (BasePart),
+				cframe: (CFrame),
+			}) }),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
-			local len_1 = #Value.cframes
+			local len_1 = #Value.map
 			assert(len_1 >= 1)
 			assert(len_1 <= 31)
 			alloc(2)
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
-				local val_1 = Value.cframes[i_1]
-				local axis_1, angle_1 = val_1:ToAxisAngle()
+				local val_1 = Value.map[i_1]
+				assert(val_1.root:IsA("BasePart"))
+				table.insert(outgoing_inst, val_1.root)
+				local axis_1, angle_1 = val_1.cframe:ToAxisAngle()
 				axis_1 = axis_1 * angle_1
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.X)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.X)
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.Y)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.Y)
 				alloc(4)
-				buffer.writef32(outgoing_buff, outgoing_apos, val_1.Position.Z)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.cframe.Position.Z)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.X)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Y)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Z)
-			end
-			local len_2 = #Value.roots
-			assert(len_2 >= 1)
-			assert(len_2 <= 31)
-			alloc(2)
-			buffer.writeu16(outgoing_buff, outgoing_apos, len_2)
-			for i_2 = 1, len_2 do
-				local val_2 = Value.roots[i_2]
-				assert(val_2:IsA("BasePart"))
-				table.insert(outgoing_inst, val_2)
 			end
 			local buff = buffer.create(outgoing_used)
 			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)

@@ -43,23 +43,34 @@ RunService.Heartbeat:Connect(function()
 		local roots = {}
 		local cframes = {}
 
+		local map = {} :: {root: BasePart, cframe: CFrame}
+
 		for root, log in pairs(playerSnapshots) do
 			local lastSnapshot = Snapshots.getLatestFrame(log)
 
-			-- In future don't send the whole CFrame as it's really slow
 			if lastSnapshot then
+				table.insert(map, {
+					root = root,
+					cframe = lastSnapshot.cframe
+				})
+
 				table.insert(roots, root)
 				table.insert(cframes, lastSnapshot.cframe)
 			end
 		end
 
-		if (#cframes == #roots) and (#cframes > 0) and (#roots > 0) then
-			-- Broadcast replication to all clients
+		-- In future don't send the whole CFrame as it's really slow
+		if #map > 0 then
 			Zap.BroadcastReplication.FireAll({
 				frame = currentFrame,
-				roots = roots,
-				cframes = cframes
-			})
+				map = map
+			})	
+		end
+		
+		-- Interpolate players on server positions
+		if (#cframes == #roots) and (#cframes > 0) and (#roots > 0) then
+			-- Broadcast replication to all clients
+			
 
 			-- Move characters on serve
 			--Workspace:BulkMoveTo(roots, cframes)

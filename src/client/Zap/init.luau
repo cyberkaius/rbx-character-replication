@@ -154,33 +154,26 @@ unreliable.OnClientEvent:Connect(function(buff, inst)
 		local value
 		value = {}
 		value.frame = buffer.readu8(incoming_buff, read(1))
-		value.cframes = {}
+		value.map = {}
 		local len_1 = buffer.readu16(incoming_buff, read(2))
 		assert(len_1 >= 1)
 		assert(len_1 <= 31)
 		for i_1 = 1, len_1 do
 			local val_1
+			val_1 = {}
+			incoming_ipos = incoming_ipos + 1
+			val_1.root = incoming_inst[incoming_ipos]
+			assert(val_1.root ~= nil)
+			assert(val_1.root:IsA("BasePart"))
 			local pos_1 = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
 			local axisangle_1 = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
 			local angle_1 = axisangle_1.Magnitude
 			if angle_1 ~= 0 then
-				val_1 = CFrame.fromAxisAngle(axisangle_1, angle_1) + pos_1
+				val_1.cframe = CFrame.fromAxisAngle(axisangle_1, angle_1) + pos_1
 			else
-				val_1 = CFrame.new(pos_1)
+				val_1.cframe = CFrame.new(pos_1)
 			end
-			value.cframes[i_1] = val_1
-		end
-		value.roots = {}
-		local len_2 = buffer.readu16(incoming_buff, read(2))
-		assert(len_2 >= 1)
-		assert(len_2 <= 31)
-		for i_2 = 1, len_2 do
-			local val_2
-			incoming_ipos = incoming_ipos + 1
-			val_2 = incoming_inst[incoming_ipos]
-			assert(val_2 ~= nil)
-			assert(val_2:IsA("BasePart"))
-			value.roots[i_2] = val_2
+			value.map[i_1] = val_1
 		end
 		if events[2] then
 			task.spawn(events[2], value)
@@ -227,8 +220,10 @@ local returns = {
 	BroadcastReplication = {
 		SetCallback = function(Callback: (({
 			frame: (number),
-			cframes: ({ (CFrame) }),
-			roots: ({ (BasePart) }),
+			map: ({ ({
+				root: (BasePart),
+				cframe: (CFrame),
+			}) }),
 		})) -> ()): () -> ()
 			events[2] = Callback
 			for _, value in event_queue[2] do
