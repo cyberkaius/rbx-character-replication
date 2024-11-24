@@ -23,22 +23,22 @@ function Snapshots.getLog(self: Snapshots): {Frame}
 end
 
 function Snapshots.addFrame(self: Snapshots, frame: number, data: CFrame)
+    if #self.log + 1 > self.bufferSize then
+        table.remove(self.log, 1)
+    end
+
     table.insert(self.log, {
         frameNumber = frame,
         timestamp = os.clock(),
         cframe = data
     })
-
-    if #self.log > self.bufferSize then
-        table.remove(self.log, 1)
-    end
 end
 
 function Snapshots.getLatestFrame(self: Snapshots): Frame?
     if #self.log > 1 then
         return self.log[#self.log]
     end
-    
+
     return nil
 end
 
