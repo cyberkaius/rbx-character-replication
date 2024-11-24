@@ -37,7 +37,6 @@ RunService.PostSimulation:Connect(function()
     local cframes = {}
 
     for i, v in pairs(playerSnapshots) do
-        print(Snapshots.getLog(v))
         local currentSnapshot = Snapshots.getLatestFrame(v)
 
         if currentSnapshot then
@@ -64,6 +63,7 @@ Zap.BroadcastReplication.SetCallback(function(data)
             if not playerSnapshots[v.root] then
                 -- Todo: delete snapshot log when player leaves
                 playerSnapshots[v.root] = Snapshots.new(2)
+                v.root.Anchored = false
             end
 
             Snapshots.addFrame(playerSnapshots[v.root], data.frame, v.cframe)
