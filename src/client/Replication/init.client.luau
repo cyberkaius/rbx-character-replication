@@ -18,7 +18,13 @@ local lastTick = os.clock()
 local currentFrame = 1
 
 RunService.PostSimulation:Connect(function()
-    if os.clock() - lastTick >= replicationRate then
+    local deltaTime = os.clock() - lastTick
+
+    if deltaTime >= replicationRate then
+        lastTick = os.clock()
+
+        print(1 / deltaTime)
+
         Zap.RequestReplication.Fire({
             frameNumber = currentFrame,
             cframe = root.CFrame,

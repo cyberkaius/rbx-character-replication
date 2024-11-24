@@ -3,6 +3,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
 
+-- Turn this into a class that the server and client can create to store snapshots
+-- Store around .5s of snapshot but could be bigger
 local Snapshots = {}
 
 type SnapshotFrame = {
