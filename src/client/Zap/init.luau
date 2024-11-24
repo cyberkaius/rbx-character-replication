@@ -189,12 +189,15 @@ local returns = {
 	SendEvents = SendEvents,
 	RequestReplication = {
 		Fire = function(Value: ({
+			frameNumber: (number),
 			cframe: (CFrame),
 		}))
 			local saved = save()
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frameNumber)
 			local axis_1, angle_1 = Value.cframe:ToAxisAngle()
 			axis_1 = axis_1 * angle_1
 			alloc(4)

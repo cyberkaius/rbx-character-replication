@@ -29,26 +29,8 @@ Zap.RequestReplication.SetCallback(function(player, data)
 	local character = player.Character :: any
 	local root = character and character.HumanoidRootPart :: BasePart
 
-	if not Snapshots[root] then return end
-
-	-- Move player
-	--local position = Vector3.new(data.x, data.y, data.z)
-	--local rotation = CFrame.Angles(0, data.rotation, 0)
-
-	--root.Position = position
-
-	--root.Rotation = Vector3.new(0, data.rotation, 0)
-	--character:PivotTo(CFrame.new(position) * rotation)
-
 	-- Only keep previous 40 snapshots
-	local snapshot = data :: Snapshots.Snapshot
-	snapshot.tick = os.clock()
-
-	table.insert(Snapshots[root], snapshot)
-
-	if #Snapshots[root] > 40 then
-		table.remove(Snapshots[root], 1)
-	end
+	Snapshots.addFrame(root, data.frameNumber, data.cframe)
 end)
 
 local replicationRate = 1/40
@@ -58,10 +40,11 @@ RunService.Heartbeat:Connect(function()
 	if os.clock() - lastTick >= replicationRate then
 		local map = {}
 
-		for root, list in pairs(Snapshots) do
-			local lastSnapshot = list[#list]
-
-			if lastSnapshot ~= nil then
+		for root, list in pairs(Snapshots.getLogs()) do
+			local lastSnapshot = Snapshots.getLatestFrame(root)
+			
+			-- In future don't send the whole CFrame as it's really slow
+			if lastSnapshot then
 				table.insert(map, {
 					root = root,
 					cframe = lastSnapshot.cframe

@@ -187,6 +187,7 @@ unreliable.OnServerEvent:Connect(function(player, buff, inst)
 	if id == 1 then
 		local value
 		value = {}
+		value.frameNumber = buffer.readu8(incoming_buff, read(1))
 		local pos_1 = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
 		local axisangle_1 = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
 		local angle_1 = axisangle_1.Magnitude
@@ -391,6 +392,7 @@ local returns = {
 	},
 	RequestReplication = {
 		SetCallback = function(Callback: (Player, ({
+			frameNumber: (number),
 			cframe: (CFrame),
 		})) -> ()): () -> ()
 			events[1] = Callback

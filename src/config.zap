@@ -9,7 +9,8 @@ event RequestReplication = {
 	type: Unreliable,
 	call: SingleAsync,
 	data: struct {  
-		cframe: CFrame
+		frameNumber: u8,
+		cframe: CFrame,
 	},
 }
 

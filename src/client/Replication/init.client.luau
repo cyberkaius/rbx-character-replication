@@ -10,15 +10,24 @@ local root = character and character:FindFirstChild("HumanoidRootPart")
 
 root.Anchored = false
 
-local replicationRate = 1/40
+local frameRate = 40
+local replicationRate = 1 / frameRate
 
 local lastTick = os.clock()
+local currentFrame = 1
 
 RunService.PostSimulation:Connect(function()
     if os.clock() - lastTick >= replicationRate then
         Zap.RequestReplication.Fire({
+            frameNumber = currentFrame,
             cframe = root.CFrame,
         })
+
+        currentFrame += 1
+
+        if currentFrame > frameRate then
+            currentFrame = 1
+        end
     end
 end)
 
