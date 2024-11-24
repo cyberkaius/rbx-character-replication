@@ -35,7 +35,19 @@ function Snapshots.addFrame(self: Snapshots, frame: number, data: CFrame)
 end
 
 function Snapshots.getLatestFrame(self: Snapshots): Frame?
-    return self.log[#self.log]
+    if #self.log > 1 then
+        return self.log[#self.log]
+    end
+    
+    return nil
+end
+
+function Snapshots.getPreviousFrame(self: Snapshots): Frame?
+    if #self.log > 1 then
+        return self.log[#self.log - 1]
+    end
+
+    return nil
 end
 
 return Snapshots

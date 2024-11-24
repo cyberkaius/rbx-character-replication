@@ -19,6 +19,27 @@ local replicationRate = 1 / Interpolation.frameRate
 
 local lastTick = os.clock()
 
+-- Create a snapshot buffer of 2 for every player
+local playerSnapshots = {} :: {[BasePart]: Snapshots.Snapshots}
+
+Players.PlayerAdded:Connect(function(player: Player)
+    player.CharacterAdded:Connect(function(character: Model)
+        local otherRoot = character:WaitForChild("HumanoidRootPart") :: BasePart
+
+		if (not otherRoot == root) and (not playerSnapshots[root]) then
+            playerSnapshots[otherRoot] = Snapshots.new(2)
+		end
+    end)
+
+    player.CharacterRemoving:Connect(function(character: Model)
+        local otherRoot = character:WaitForChild("HumanoidRootPart") :: BasePart
+
+        if not otherRoot == root then
+            playerSnapshots[otherRoot] = nil
+        end
+    end)
+end)
+
 -- Replicate position to server
 RunService.PostSimulation:Connect(function()
     if os.clock() - lastTick >= replicationRate then
@@ -30,25 +51,32 @@ RunService.PostSimulation:Connect(function()
     end
 end)
 
--- Update other players positions locally
+-- Add frames of every player and interpolate their positions
 Zap.BroadcastReplication.SetCallback(function(data)
     local cframes = {}
     local roots = {}
 
-    local myCFrame = nil :: CFrame?
-
     for i, v in pairs(data.roots) do
         if v ~= root then
-            myCFrame = data.cframes[i]
+            Snapshots.addFrame(playerSnapshots[v], data.frame, data.cframes[i])
+
+            local currentSnapshot = Snapshots.getLatestFrame(playerSnapshots[v])
+            local previousSnapshot = Snapshots.getPreviousFrame(playerSnapshots[v])
+
+            local cframeToAdd = data.cframes[i]
+
+            if currentSnapshot and previousSnapshot then
+                cframeToAdd = Interpolation.getCFrame(previousSnapshot, currentSnapshot)
+            end
+
+            table.insert(roots, v)
+            table.insert(cframes, cframeToAdd)
+        else
+            Snapshots.addFrame(snapshotLog, data.frame, data.cframes[i])
         end
     end
 
     if #data.cframes == #data.roots then
-        Workspace:BulkMoveTo({}, {})
-    end
-
-    -- Add new snapshot to local snapshot list
-    if myCFrame then
-        Snapshots.addFrame(snapshotLog, data.frame, myCFrame)
+        Workspace:BulkMoveTo(cframes, roots)
     end
 end)
