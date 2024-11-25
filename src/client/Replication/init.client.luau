@@ -18,7 +18,7 @@ local localClientBuffer = SnapshotBuffer.new(Interpolation.replicationRate / 2)
 
 local lastTick = os.clock()
 
-local queuedData = {
+local queuedTransform = {
     x = root.Position.X,
     y = root.Position.Y,
     z = root.Position.Z,
@@ -46,13 +46,13 @@ RunService.PostSimulation:Connect(function()
     if os.clock() - lastTick >= Interpolation.packetFrequency then
         lastTick = os.clock()
 
-        queuedData = {
+        queuedTransform = {
             x = root.Position.X,
             y = root.Position.Y,
             z = root.Position.Z,
         }
 
-        Zap.RequestReplication.Fire(queuedData)
+        Zap.RequestReplication.Fire(queuedTransform)
     end
 end)
 
@@ -80,17 +80,17 @@ end)
 
 -- Receive packets from server
 Zap.BroadcastReplication.SetCallback(function(data)
-    SnapshotBuffer.addSnapshot(localClientBuffer, data.frame, queuedData)
+    SnapshotBuffer.addSnapshot(localClientBuffer, data.frame, queuedTransform)
 
     for i, v in pairs(data.map) do
-        local posData = {
+        local transform = {
             x = v.x, 
             y = v.y, 
             z = v.z
         }
 
         if remoteClientRoots[v.entity] and remoteClientBuffers[v.entity]then
-            SnapshotBuffer.addSnapshot(remoteClientBuffers[v.entity], data.frame, posData)
+            SnapshotBuffer.addSnapshot(remoteClientBuffers[v.entity], data.frame, transform)
         end
     end
 end)

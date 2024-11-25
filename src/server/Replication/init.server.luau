@@ -10,8 +10,6 @@ local Entities = require(script.Entities)
 
 local playerSnapshots = {} :: {SnapshotBuffer.Buffer}
 
-local bufferSize = Interpolation.replicationRate / 2
-
 -- Create snapshot of roots when character added / removed
 Players.PlayerAdded:Connect(function(player: Player)
     player.CharacterAdded:Connect(function(character: Model)
@@ -23,7 +21,7 @@ Players.PlayerAdded:Connect(function(player: Player)
 			add = true
 		})
 
-        playerSnapshots[key] = SnapshotBuffer.new(bufferSize)
+        playerSnapshots[key] = SnapshotBuffer.new(Interpolation.replicationRate / 2)
 
 		-- Disable default replication by anchoring
 		task.wait()
@@ -55,22 +53,22 @@ local currentFrame = 1
 
 RunService.Heartbeat:Connect(function()
 	if os.clock() - lastTick >= Interpolation.packetFrequency then
-		local roots = {}
-		local cframes = {}
+		-- local roots = {}
+		-- local cframes = {}
 
-		for key, log in pairs(playerSnapshots) do
-			local lastSnapshot = SnapshotBuffer.getLatestSnapshot(log)
+		-- for key, log in pairs(playerSnapshots) do
+		-- 	local lastSnapshot = SnapshotBuffer.getLatestSnapshot(log)
 
-			if lastSnapshot then
-				table.insert(roots, key)
-				table.insert(cframes, lastSnapshot.data)
-			end
-		end
+		-- 	if lastSnapshot then
+		-- 		table.insert(roots, key)
+		-- 		table.insert(cframes, lastSnapshot.data)
+		-- 	end
+		-- end
 		
-		-- Interpolate players on server positions
-		if (#cframes == #roots) and (#cframes > 0) and (#roots > 0) then
-			--Workspace:BulkMoveTo(roots, cframes)
-		end
+		-- -- Interpolate players on server positions
+		-- if (#cframes == #roots) and (#cframes > 0) and (#roots > 0) then
+		-- 	--Workspace:BulkMoveTo(roots, cframes)
+		-- end
 
 		currentFrame += 1
 
@@ -90,7 +88,6 @@ Zap.RequestReplication.SetCallback(function(player, data)
 	end
 
 	-- Send them back other player's data
-
 	local map = {} :: {root: BasePart, cframe: CFrame}
 
 	for key, snapshot in pairs(playerSnapshots) do
@@ -100,9 +97,9 @@ Zap.RequestReplication.SetCallback(function(player, data)
 			if lastSnapshot then
 				table.insert(map, {
 					entity = key,
-					x = lastSnapshot.data.x,
-					y = lastSnapshot.data.y,
-					z =  lastSnapshot.data.z,
+					x = lastSnapshot.transform.x,
+					y = lastSnapshot.transform.y,
+					z = lastSnapshot.transform.z,
 				})
 			end	
 		end

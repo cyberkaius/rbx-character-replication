@@ -1,3 +1,5 @@
+local Transform = require(script.Parent.Transform)
+
 export type Buffer = {
     snapshots: {Snapshot},
     bufferSize: number,
@@ -6,13 +8,7 @@ export type Buffer = {
 export type Snapshot = {
     frameNumber: number,
     timestamp: number,
-    data: LocationData
-}
-
-type LocationData = {
-    x: number,
-    y: number,
-    z: number
+    transform: Transform.Transform
 }
 
 local SnapshotBuffer = {}
@@ -28,7 +24,7 @@ function SnapshotBuffer.getSnapshots(self: Buffer): {Snapshot}
     return self.snapshots
 end
 
-function SnapshotBuffer.addSnapshot(self: Buffer, frame: number, data: LocationData)
+function SnapshotBuffer.addSnapshot(self: Buffer, frame: number, transform: Transform.Transform)
     if #self.snapshots + 1 > self.bufferSize then
         table.remove(self.snapshots, 1)
     end
@@ -36,7 +32,7 @@ function SnapshotBuffer.addSnapshot(self: Buffer, frame: number, data: LocationD
     table.insert(self.snapshots, {
         frameNumber = frame,
         timestamp = os.clock(),
-        data = data
+        transform = transform
     })
 end
 

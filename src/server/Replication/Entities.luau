@@ -1,9 +1,3 @@
--- TODO: 
--- When a new character is added, map their root part to an entity number
--- Send this new number and root over to the client so they can store it
--- When character leaves, remove the entity number from the list and tell the client
--- This way only a number has to be sent over to specify what root to update instead of a whole instance.
-
 local Entities = {}
 
 local list = {} :: {Instance?}

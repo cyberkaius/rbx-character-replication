@@ -9,8 +9,8 @@ Interpolation.packetFrequency = 1 / Interpolation.replicationRate
 function Interpolation.getCFrame(snapshotA: SnapshotBuffer.Snapshot, snapshotB: SnapshotBuffer.Snapshot, renderTime: number)
     local alpha = (renderTime - snapshotA.timestamp) / (snapshotB.timestamp - snapshotA.timestamp)
 
-    local CFrameA = CFrame.new(snapshotA.data.x, snapshotA.data.y, snapshotA.data.z)
-    local CFrameB = CFrame.new(snapshotA.data.x, snapshotA.data.y, snapshotA.data.z)
+    local CFrameA = CFrame.new(snapshotA.transform.x, snapshotA.transform.y, snapshotA.transform.z)
+    local CFrameB = CFrame.new(snapshotA.transform.x, snapshotA.transform.y, snapshotA.transform.z)
 
     local newCFrame = CFrameA:Lerp(CFrameB, alpha)
 
