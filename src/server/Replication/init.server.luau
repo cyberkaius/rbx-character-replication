@@ -58,31 +58,13 @@ RunService.Heartbeat:Connect(function()
 		local roots = {}
 		local cframes = {}
 
-		local map = {} :: {root: BasePart, cframe: CFrame}
-
 		for key, log in pairs(playerSnapshots) do
 			local lastSnapshot = SnapshotBuffer.getLatestSnapshot(log)
 
 			if lastSnapshot then
-				table.insert(map, {
-					entity = key,
-					x = lastSnapshot.data.x,
-					y = lastSnapshot.data.y,
-					z =  lastSnapshot.data.z,
-				})
-
 				table.insert(roots, key)
 				table.insert(cframes, lastSnapshot.data)
 			end
-		end
-
-		-- In future don't send the whole CFrame as it's really slow
-		-- Also todo: dont send the receiving player's data back
-		if #map > 0 then
-			Zap.BroadcastReplication.FireAll({
-				frame = currentFrame,
-				map = map
-			})	
 		end
 		
 		-- Interpolate players on server positions
@@ -100,9 +82,36 @@ end)
 
 -- Add snapshot frame
 Zap.RequestReplication.SetCallback(function(player, data)
+	-- Add new player data to snapshot
 	local entityId = EntityList.getKey(player)
 
 	if entityId then
 		SnapshotBuffer.addSnapshot(playerSnapshots[entityId], currentFrame, data)
+	end
+
+	-- Send them back other player's data
+
+	local map = {} :: {root: BasePart, cframe: CFrame}
+
+	for key, snapshot in pairs(playerSnapshots) do
+		if key ~= entityId then
+			local lastSnapshot = SnapshotBuffer.getLatestSnapshot(snapshot)
+
+			if lastSnapshot then
+				table.insert(map, {
+					entity = key,
+					x = lastSnapshot.data.x,
+					y = lastSnapshot.data.y,
+					z =  lastSnapshot.data.z,
+				})
+			end	
+		end
+	end
+
+	if #map > 0 then
+		Zap.BroadcastReplication.Fire(player, {
+			frame = currentFrame,
+			map = map
+		})	
 	end
 end)

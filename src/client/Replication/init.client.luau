@@ -13,10 +13,16 @@ local root = character:WaitForChild("HumanoidRootPart")
 
 root.Anchored = false
 
-local lastTick = os.clock()
-
 -- Local client buffer
 local localClientBuffer = SnapshotBuffer.new(Interpolation.replicationRate / 2)
+
+local lastTick = os.clock()
+
+local queuedData = {
+    x = root.Position.X,
+    y = root.Position.Y,
+    z = root.Position.Z,
+} 
 
 -- Other clients buffers
 local remoteClientBuffers = {} :: {SnapshotBuffer.Buffer}
@@ -40,11 +46,13 @@ RunService.PostSimulation:Connect(function()
     if os.clock() - lastTick >= Interpolation.packetFrequency then
         lastTick = os.clock()
 
-        Zap.RequestReplication.Fire({
+        queuedData = {
             x = root.Position.X,
             y = root.Position.Y,
             z = root.Position.Z,
-        })
+        }
+
+        Zap.RequestReplication.Fire(queuedData)
     end
 end)
 
@@ -81,6 +89,8 @@ end)
 
 -- Receive packets from server
 Zap.BroadcastReplication.SetCallback(function(data)
+    SnapshotBuffer.addSnapshot(localClientBuffer, data.frame, queuedData)
+
     for i, v in pairs(data.map) do
         local posData = {
             x = v.x, 
@@ -88,15 +98,8 @@ Zap.BroadcastReplication.SetCallback(function(data)
             z = v.z
         }
 
-        if remoteClientRoots[v.entity] == nil then
-            -- Add snapshot to the local player's buffer
-            -- TODO: dont send back the player's data, but instead queue the data to be added to the snapshot locally, 
-            --then add the frame from the sent back remote client data
-            SnapshotBuffer.addSnapshot(localClientBuffer, data.frame, posData)
-        else
-            if remoteClientBuffers[v.entity] then
-                SnapshotBuffer.addSnapshot(remoteClientBuffers[v.entity], data.frame, posData)
-            end 
+        if remoteClientRoots[v.entity] and remoteClientBuffers[v.entity]then
+            SnapshotBuffer.addSnapshot(remoteClientBuffers[v.entity], data.frame, posData)
         end
     end
 end)
