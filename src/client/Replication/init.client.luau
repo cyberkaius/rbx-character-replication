@@ -9,7 +9,7 @@ local SnapshotBuffer = require(ReplicatedStorage.Shared.Replication.SnapshotBuff
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
-local root = character and character:WaitForChild("HumanoidRootPart")
+local root = character:WaitForChild("HumanoidRootPart")
 
 root.Anchored = false
 
@@ -27,7 +27,9 @@ RunService.PostSimulation:Connect(function()
         lastTick = os.clock()
 
         Zap.RequestReplication.Fire({
-            cframe = root.CFrame,
+            x = root.Position.X,
+            y = root.Position.Y,
+            z = root.Position.Z,
         })
     end
 end)
@@ -57,9 +59,15 @@ end)
 -- Receive packets from server
 Zap.BroadcastReplication.SetCallback(function(data)
     for i, v in pairs(data.map) do
+        local posData = {
+            x = v.x, 
+            y = v.y, 
+            z = v.z
+        }
+        
         if v.root == root then
             -- Add snapshot to the local player's buffer
-            SnapshotBuffer.addSnapshot(localClientBuffer, data.frame, v.cframe)
+            SnapshotBuffer.addSnapshot(localClientBuffer, data.frame, posData)
         else
             -- Add snapshot to the remote client's buffers
             if not remoteClientBuffers[v.root] then
@@ -67,7 +75,7 @@ Zap.BroadcastReplication.SetCallback(function(data)
                 remoteClientBuffers[v.root] = SnapshotBuffer.new(Interpolation.replicationRate / 2)
             end
 
-            SnapshotBuffer.addSnapshot(remoteClientBuffers[v.root], data.frame, v.cframe)
+            SnapshotBuffer.addSnapshot(remoteClientBuffers[v.root], data.frame, posData)
         end
     end
 end)

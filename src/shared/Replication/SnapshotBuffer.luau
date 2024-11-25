@@ -6,7 +6,13 @@ export type Buffer = {
 export type Snapshot = {
     frameNumber: number,
     timestamp: number,
-    cframe: CFrame
+    data: LocationData
+}
+
+type LocationData = {
+    x: number,
+    y: number,
+    z: number
 }
 
 local SnapshotBuffer = {}
@@ -22,7 +28,7 @@ function SnapshotBuffer.getSnapshots(self: Buffer): {Snapshot}
     return self.snapshots
 end
 
-function SnapshotBuffer.addSnapshot(self: Buffer, frame: number, data: CFrame)
+function SnapshotBuffer.addSnapshot(self: Buffer, frame: number, data: LocationData)
     if #self.snapshots + 1 > self.bufferSize then
         table.remove(self.snapshots, 1)
     end
@@ -30,7 +36,7 @@ function SnapshotBuffer.addSnapshot(self: Buffer, frame: number, data: CFrame)
     table.insert(self.snapshots, {
         frameNumber = frame,
         timestamp = os.clock(),
-        cframe = data
+        data = data
     })
 end
 

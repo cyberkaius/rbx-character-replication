@@ -165,14 +165,9 @@ unreliable.OnClientEvent:Connect(function(buff, inst)
 			val_1.root = incoming_inst[incoming_ipos]
 			assert(val_1.root ~= nil)
 			assert(val_1.root:IsA("BasePart"))
-			local pos_1 = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
-			local axisangle_1 = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
-			local angle_1 = axisangle_1.Magnitude
-			if angle_1 ~= 0 then
-				val_1.cframe = CFrame.fromAxisAngle(axisangle_1, angle_1) + pos_1
-			else
-				val_1.cframe = CFrame.new(pos_1)
-			end
+			val_1.x = buffer.readf32(incoming_buff, read(4))
+			val_1.y = buffer.readf32(incoming_buff, read(4))
+			val_1.z = buffer.readf32(incoming_buff, read(4))
 			value.map[i_1] = val_1
 		end
 		if events[2] then
@@ -191,26 +186,20 @@ local returns = {
 	SendEvents = SendEvents,
 	RequestReplication = {
 		Fire = function(Value: ({
-			cframe: (CFrame),
+			x: (number),
+			y: (number),
+			z: (number),
 		}))
 			local saved = save()
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 1)
-			local axis_1, angle_1 = Value.cframe:ToAxisAngle()
-			axis_1 = axis_1 * angle_1
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Value.cframe.Position.X)
+			buffer.writef32(outgoing_buff, outgoing_apos, Value.x)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Value.cframe.Position.Y)
+			buffer.writef32(outgoing_buff, outgoing_apos, Value.y)
 			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, Value.cframe.Position.Z)
-			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, axis_1.X)
-			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Y)
-			alloc(4)
-			buffer.writef32(outgoing_buff, outgoing_apos, axis_1.Z)
+			buffer.writef32(outgoing_buff, outgoing_apos, Value.z)
 			local buff = buffer.create(outgoing_used)
 			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)
 			unreliable:FireServer(buff, outgoing_inst)
@@ -222,7 +211,9 @@ local returns = {
 			frame: (number),
 			map: ({ ({
 				root: (BasePart),
-				cframe: (CFrame),
+				x: (number),
+				y: (number),
+				z: (number),
 			}) }),
 		})) -> ()): () -> ()
 			events[2] = Callback

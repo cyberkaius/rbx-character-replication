@@ -50,11 +50,13 @@ RunService.Heartbeat:Connect(function()
 			if lastSnapshot then
 				table.insert(map, {
 					root = root,
-					cframe = lastSnapshot.cframe
+					x = lastSnapshot.data.x,
+					y = lastSnapshot.data.y,
+					z =  lastSnapshot.data.z,
 				})
 
 				table.insert(roots, root)
-				table.insert(cframes, lastSnapshot.cframe)
+				table.insert(cframes, lastSnapshot.data)
 			end
 		end
 
@@ -66,8 +68,9 @@ RunService.Heartbeat:Connect(function()
 			})	
 		end
 		
+		-- Interpolate players on server positions
 		if (#cframes == #roots) and (#cframes > 0) and (#roots > 0) then
-			Workspace:BulkMoveTo(roots, cframes)
+			--Workspace:BulkMoveTo(roots, cframes)
 		end
 
 		currentFrame += 1
@@ -86,6 +89,6 @@ Zap.RequestReplication.SetCallback(function(player, data)
 	local log = playerSnapshots[root]
 
 	if log then
-		SnapshotBuffer.addSnapshot(log, currentFrame, data.cframe)
+		SnapshotBuffer.addSnapshot(log, currentFrame, data)
 	end
 end)
