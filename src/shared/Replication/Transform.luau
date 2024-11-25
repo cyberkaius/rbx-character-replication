@@ -5,5 +5,6 @@ export type Transform = {
 }
 
 -- TODO: make function to parse transform into CFrame
+-- TODO: add y-rotation
 
 return {}
