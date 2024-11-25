@@ -36,7 +36,7 @@ event UpdateEntity = {
 	call: SingleAsync,
 	data: struct {
 		entity: u8,
-		root: Instance(BasePart),
+		player: Instance(Player),
 		add: boolean
 	}
 }

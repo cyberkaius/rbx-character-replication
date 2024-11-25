@@ -15,29 +15,24 @@ local bufferSize = Interpolation.replicationRate / 2
 -- Create snapshot of roots when character added / removed
 Players.PlayerAdded:Connect(function(player: Player)
     player.CharacterAdded:Connect(function(character: Model)
-        local root = character:WaitForChild("HumanoidRootPart") :: BasePart
-
-		local key = EntityList.add(root)
+		local key = EntityList.add(player)
 
 		Zap.UpdateEntity.FireExcept(player, {
 			entity = key,
-			root = root,
+			player = player,
 			add = true
 		})
 
+        playerSnapshots[key] = SnapshotBuffer.new(bufferSize)
+
 		-- Disable default replication by anchoring
 		task.wait()
+        local root = character:WaitForChild("HumanoidRootPart") :: BasePart
 		root.Anchored = true
-
-        if not playerSnapshots[key] then
-            playerSnapshots[key] = SnapshotBuffer.new(bufferSize)
-        end
     end)
 
     player.CharacterRemoving:Connect(function(character: Model)
-        local root = character:WaitForChild("HumanoidRootPart") :: BasePart
-
-		local key = EntityList.getKey(root)
+		local key = EntityList.getKey(player)
 
 		if key then
 			playerSnapshots[key] = nil
@@ -45,7 +40,7 @@ Players.PlayerAdded:Connect(function(player: Player)
 
 			Zap.UpdateEntity.FireExcept(player, {
 				entity = key,
-				root = root,
+				player = player,
 				add = false
 			})
 		end	
@@ -65,23 +60,24 @@ RunService.Heartbeat:Connect(function()
 
 		local map = {} :: {root: BasePart, cframe: CFrame}
 
-		for root, log in pairs(playerSnapshots) do
+		for key, log in pairs(playerSnapshots) do
 			local lastSnapshot = SnapshotBuffer.getLatestSnapshot(log)
 
 			if lastSnapshot then
 				table.insert(map, {
-					root = root,
+					entity = key,
 					x = lastSnapshot.data.x,
 					y = lastSnapshot.data.y,
 					z =  lastSnapshot.data.z,
 				})
 
-				table.insert(roots, root)
+				table.insert(roots, key)
 				table.insert(cframes, lastSnapshot.data)
 			end
 		end
 
 		-- In future don't send the whole CFrame as it's really slow
+		-- Also todo: dont send the receiving player's data back
 		if #map > 0 then
 			Zap.BroadcastReplication.FireAll({
 				frame = currentFrame,
@@ -104,12 +100,9 @@ end)
 
 -- Add snapshot frame
 Zap.RequestReplication.SetCallback(function(player, data)
-	local character = player.Character :: any
-	local root = character and character.HumanoidRootPart :: BasePart
+	local entityId = EntityList.getKey(player)
 
-	local log = playerSnapshots[root]
-
-	if log then
-		SnapshotBuffer.addSnapshot(log, currentFrame, data)
+	if entityId then
+		SnapshotBuffer.addSnapshot(playerSnapshots[entityId], currentFrame, data)
 	end
 end)

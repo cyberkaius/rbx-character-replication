@@ -389,7 +389,7 @@ local returns = {
 	UpdateEntity = {
 		Fire = function(Player: Player, Value: ({
 			entity: (number),
-			root: (BasePart),
+			player: (Player),
 			add: (boolean),
 		}))
 			load_player(Player)
@@ -397,15 +397,15 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
-			assert(Value.root:IsA("BasePart"))
-			table.insert(outgoing_inst, Value.root)
+			assert(Value.player:IsA("Player"))
+			table.insert(outgoing_inst, Value.player)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
 			player_map[Player] = save()
 		end,
 		FireAll = function(Value: ({
 			entity: (number),
-			root: (BasePart),
+			player: (Player),
 			add: (boolean),
 		}))
 			load_empty()
@@ -413,8 +413,8 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
-			assert(Value.root:IsA("BasePart"))
-			table.insert(outgoing_inst, Value.root)
+			assert(Value.player:IsA("Player"))
+			table.insert(outgoing_inst, Value.player)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
@@ -428,7 +428,7 @@ local returns = {
 		end,
 		FireExcept = function(Except: Player, Value: ({
 			entity: (number),
-			root: (BasePart),
+			player: (Player),
 			add: (boolean),
 		}))
 			load_empty()
@@ -436,8 +436,8 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
-			assert(Value.root:IsA("BasePart"))
-			table.insert(outgoing_inst, Value.root)
+			assert(Value.player:IsA("Player"))
+			table.insert(outgoing_inst, Value.player)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
@@ -453,7 +453,7 @@ local returns = {
 		end,
 		FireList = function(List: { Player }, Value: ({
 			entity: (number),
-			root: (BasePart),
+			player: (Player),
 			add: (boolean),
 		}))
 			load_empty()
@@ -461,8 +461,8 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
-			assert(Value.root:IsA("BasePart"))
-			table.insert(outgoing_inst, Value.root)
+			assert(Value.player:IsA("Player"))
+			table.insert(outgoing_inst, Value.player)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
@@ -476,7 +476,7 @@ local returns = {
 		end,
 		FireSet = function(Set: { [Player]: true }, Value: ({
 			entity: (number),
-			root: (BasePart),
+			player: (Player),
 			add: (boolean),
 		}))
 			load_empty()
@@ -484,8 +484,8 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
-			assert(Value.root:IsA("BasePart"))
-			table.insert(outgoing_inst, Value.root)
+			assert(Value.player:IsA("Player"))
+			table.insert(outgoing_inst, Value.player)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst

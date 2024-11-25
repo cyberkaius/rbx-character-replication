@@ -161,9 +161,9 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			value = {}
 			value.entity = buffer.readu8(incoming_buff, read(1))
 			incoming_ipos = incoming_ipos + 1
-			value.root = incoming_inst[incoming_ipos]
-			assert(value.root ~= nil)
-			assert(value.root:IsA("BasePart"))
+			value.player = incoming_inst[incoming_ipos]
+			assert(value.player ~= nil)
+			assert(value.player:IsA("Player"))
 			value.add = buffer.readu8(incoming_buff, read(1)) == 1
 			if events[3] then
 				task.spawn(events[3], value)
@@ -260,7 +260,7 @@ local returns = {
 	UpdateEntity = {
 		SetCallback = function(Callback: (({
 			entity: (number),
-			root: (BasePart),
+			player: (Player),
 			add: (boolean),
 		})) -> ()): () -> ()
 			events[3] = Callback

@@ -19,16 +19,19 @@ local lastTick = os.clock()
 local localClientBuffer = SnapshotBuffer.new(Interpolation.replicationRate / 2)
 
 -- Other clients buffers
-local remoteClientBuffers = {} :: {[BasePart]: SnapshotBuffer.Buffer}
+local remoteClientBuffers = {} :: {SnapshotBuffer.Buffer}
 
 -- Get entity updates
-local remoteClientRoots = {} :: {Instance}
+local remoteClientRoots = {} :: {Instance?}
 
 Zap.UpdateEntity.SetCallback(function(data)
     if data.add then
-        remoteClientRoots[data.entity] = data.root
+        local remoteRoot = data.player.Character and data.player.Character:FindFirstChild("HumanoidRootPart")
+        remoteClientRoots[data.entity] = remoteRoot
+        remoteClientBuffers[data.entity] = SnapshotBuffer.new(Interpolation.replicationRate / 2)
     else
         remoteClientRoots[data.entity] = nil
+        remoteClientBuffers[data.entity] = nil
     end
 end)
 
@@ -50,16 +53,25 @@ RunService.RenderStepped:Connect(function()
     local roots = {}
     local cframes = {}
 
-    for rootPart, buffer in pairs(remoteClientBuffers) do
-        local renderTime = os.clock() - Interpolation.bufferDelay
-        local snapshotA, snapshotB = SnapshotBuffer.findClosestSnapshot(buffer, renderTime)
+    for key, buffer in pairs(remoteClientBuffers) do
+        local latest = SnapshotBuffer.getLatestSnapshot(buffer)
 
-        if snapshotA and snapshotB then
-            local newCFrame = Interpolation.getCFrame(snapshotA, snapshotB, renderTime)
-
-            table.insert(roots, rootPart)
-            table.insert(cframes, newCFrame)        
+        if latest then
+            local newCFrame = CFrame.new(latest.data.x, latest.data.y, latest.data.z)
+            table.insert(roots, remoteClientRoots[key])
+            table.insert(cframes, newCFrame)  
         end
+        
+
+        -- local renderTime = os.clock() - Interpolation.bufferDelay
+        -- local snapshotA, snapshotB = SnapshotBuffer.findClosestSnapshot(buffer, renderTime)
+
+        -- if snapshotA and snapshotB then
+        --     local newCFrame = Interpolation.getCFrame(snapshotA, snapshotB, renderTime)
+
+        --     table.insert(roots, rootPart)
+        --     table.insert(cframes, newCFrame)        
+        -- end
     end
 
     if #roots == #cframes then
@@ -76,17 +88,15 @@ Zap.BroadcastReplication.SetCallback(function(data)
             z = v.z
         }
 
-        if v.root == root then
+        if remoteClientRoots[v.entity] == nil then
             -- Add snapshot to the local player's buffer
+            -- TODO: dont send back the player's data, but instead queue the data to be added to the snapshot locally, 
+            --then add the frame from the sent back remote client data
             SnapshotBuffer.addSnapshot(localClientBuffer, data.frame, posData)
         else
-            -- Add snapshot to the remote client's buffers
-            if not remoteClientBuffers[v.root] then
-                -- Todo: delete snapshot log when character dies
-                remoteClientBuffers[v.root] = SnapshotBuffer.new(Interpolation.replicationRate / 2)
-            end
-
-            SnapshotBuffer.addSnapshot(remoteClientBuffers[v.root], data.frame, posData)
+            if remoteClientBuffers[v.entity] then
+                SnapshotBuffer.addSnapshot(remoteClientBuffers[v.entity], data.frame, posData)
+            end 
         end
     end
 end)
