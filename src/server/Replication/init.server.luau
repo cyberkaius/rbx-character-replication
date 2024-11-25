@@ -5,11 +5,11 @@ local Workspace = game:GetService("Workspace")
 
 local Zap = require(script.Parent.Zap)
 local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
-local Snapshots = require(ReplicatedStorage.Shared.Replication.Snapshots)
+local SnapshotBuffer = require(ReplicatedStorage.Shared.Replication.SnapshotBuffer)
 
-local playerSnapshots = {} :: {[BasePart]: Snapshots.Snapshots}
+local playerSnapshots = {} :: {[BasePart]: SnapshotBuffer.Buffer}
 
-local bufferSize = Interpolation.frameRate / 2
+local bufferSize = Interpolation.replicationRate / 2
 
 -- Create snapshot of roots when character added / removed
 Players.PlayerAdded:Connect(function(player: Player)
@@ -21,7 +21,7 @@ Players.PlayerAdded:Connect(function(player: Player)
 		root.Anchored = true
 
         if not playerSnapshots[root] then
-            playerSnapshots[root] = Snapshots.new(bufferSize)
+            playerSnapshots[root] = SnapshotBuffer.newBySize(bufferSize)
         end    
     end)
 
@@ -33,20 +33,19 @@ end)
 
 -- Replicate current snapshots to all clients
 
-local replicationRate = 1 / Interpolation.frameRate
 local lastTick = os.clock()
 
 local currentFrame = 1
 
 RunService.Heartbeat:Connect(function()
-	if os.clock() - lastTick >= replicationRate then
+	if os.clock() - lastTick >= Interpolation.packetFrequency then
 		local roots = {}
 		local cframes = {}
 
 		local map = {} :: {root: BasePart, cframe: CFrame}
 
 		for root, log in pairs(playerSnapshots) do
-			local lastSnapshot = Snapshots.getLatestFrame(log)
+			local lastSnapshot = SnapshotBuffer.getLatestSnapshot(log)
 
 			if lastSnapshot then
 				table.insert(map, {
@@ -78,7 +77,7 @@ RunService.Heartbeat:Connect(function()
 
 		currentFrame += 1
 
-		if currentFrame > Interpolation.frameRate then
+		if currentFrame > Interpolation.replicationRate then
 			currentFrame = 0
 		end
     end
@@ -92,6 +91,6 @@ Zap.RequestReplication.SetCallback(function(player, data)
 	local log = playerSnapshots[root]
 
 	if log then
-		Snapshots.addFrame(log, currentFrame, data.cframe)
+		SnapshotBuffer.addSnapshot(log, currentFrame, data.cframe)
 	end
 end)

@@ -1,22 +1,18 @@
-local Snapshots = require(script.Parent.Snapshots)
+local SnapshotBuffer = require(script.Parent.SnapshotBuffer)
 
 local Interpolation = {}
 
-Interpolation.frameRate = 40
+Interpolation.bufferDelay = .1
+Interpolation.replicationRate = 40 -- hz
+Interpolation.packetFrequency = 1 / Interpolation.replicationRate
 
-function Interpolation.getCFrame(snapshotA: Snapshots.Frame, snapshotB: Snapshots.Frame)
-    --local currentTime = os.clock() - interpolation buffer - replication rate
-    local renderTimestamp = os.clock() - (1 / Interpolation.frameRate) - 0.01
-    local snapshotDeltaTime = snapshotB.timestamp - snapshotA.timestamp
+function Interpolation.getCFrame(snapshotA: SnapshotBuffer.Snapshot, snapshotB: SnapshotBuffer.Snapshot, renderTime: number)
+    local alpha = (renderTime - snapshotA.timestamp) / (snapshotB.timestamp - snapshotA.timestamp)
+    alpha = math.clamp(alpha, 0, 1)
 
-    local maxAlpha = 1 + (1 / Interpolation.frameRate) / snapshotDeltaTime
+    local newCFrame = snapshotA.cframe:Lerp(snapshotB.cframe, alpha)
 
-    local alpha = (renderTimestamp - snapshotA.timestamp) / snapshotDeltaTime
-    alpha = math.clamp(alpha, 0, maxAlpha)
-
-    print(alpha)
-
-    return snapshotA.cframe:Lerp(snapshotB.cframe, alpha)
+    return newCFrame
 end
 
 return Interpolation

@@ -5,47 +5,49 @@ local Workspace = game:GetService("Workspace")
 
 local Zap = require(script.Parent.Zap)
 local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
-local Snapshots = require(ReplicatedStorage.Shared.Replication.Snapshots)
+local SnapshotBuffer = require(ReplicatedStorage.Shared.Replication.SnapshotBuffer)
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
-local root = character and character:FindFirstChild("HumanoidRootPart")
+local root = character and character:WaitForChild("HumanoidRootPart")
 
 root.Anchored = false
 
-local snapshotLog = Snapshots.new(Interpolation.frameRate / 2)
-
-local replicationRate = 1 / Interpolation.frameRate
-
 local lastTick = os.clock()
 
--- Create a snapshot buffer of 2 for every player
-local playerSnapshots = {} :: {[BasePart]: Snapshots.Snapshots}
+-- Local client buffer
+local localClientBuffer = SnapshotBuffer.newBySize(Interpolation.replicationRate / 2)
 
--- Replicate position to server
+-- Other clients buffers
+local remoteClientBuffers = {} :: {[BasePart]: SnapshotBuffer.Buffer}
+
+-- Replicate locael position to server
 RunService.PostSimulation:Connect(function()
-    if os.clock() - lastTick >= replicationRate then
+    if os.clock() - lastTick >= Interpolation.packetFrequency then
         lastTick = os.clock()
 
         Zap.RequestReplication.Fire({
             cframe = root.CFrame,
         })
     end
+end)
 
-    -- Interpolate other characters
+-- Interpolate other characters
+RunService.PreRender:Connect(function()
     local roots = {}
     local cframes = {}
 
-    for i, v in pairs(playerSnapshots) do
-        local currentSnapshot = Snapshots.getLatestFrame(v)
+    for rootPart, buffer in pairs(remoteClientBuffers) do
+        local renderTime = os.clock() - Interpolation.bufferDelay 
+        local snapshotA, snapshotB = SnapshotBuffer.findClosestSnapshot(buffer, renderTime)
 
-        if currentSnapshot then
-            local previousSnapshot = Snapshots.getPreviousFrame(v) or currentSnapshot
+        print(snapshotA, snapshotB, renderTime)
 
-            local newCFrame = Interpolation.getCFrame(previousSnapshot, currentSnapshot)
+        if snapshotA and snapshotB then
+            local newCFrame = Interpolation.getCFrame(snapshotA, snapshotB, renderTime)
 
-            table.insert(roots, i)
-            table.insert(cframes, newCFrame)
+            table.insert(roots, rootPart)
+            table.insert(cframes, newCFrame)        
         end
     end
 
@@ -54,19 +56,20 @@ RunService.PostSimulation:Connect(function()
     end
 end)
 
--- Add all the snapshots to their respective buffers
+-- Receive packets from server
 Zap.BroadcastReplication.SetCallback(function(data)
     for i, v in pairs(data.map) do
         if v.root == root then
-            Snapshots.addFrame(snapshotLog, data.frame, v.cframe)
+            -- Add snapshot to the local player's buffer
+            SnapshotBuffer.addSnapshot(localClientBuffer, data.frame, v.cframe)
         else
-            if not playerSnapshots[v.root] then
-                -- Todo: delete snapshot log when player leaves
-                playerSnapshots[v.root] = Snapshots.new(2)
-                v.root.Anchored = false
+            -- Add snapshot to the remote client's buffers
+            if not remoteClientBuffers[v.root] then
+                -- Todo: delete snapshot log when character dies
+                remoteClientBuffers[v.root] = SnapshotBuffer.new(Interpolation.bufferDelay, Interpolation.packetFrequency)
             end
 
-            Snapshots.addFrame(playerSnapshots[v.root], data.frame, v.cframe)
+            SnapshotBuffer.addSnapshot(remoteClientBuffers[v.root], data.frame, v.cframe)
         end
     end
 end)
