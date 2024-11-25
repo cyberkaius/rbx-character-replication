@@ -16,7 +16,7 @@ root.Anchored = false
 local lastTick = os.clock()
 
 -- Local client buffer
-local localClientBuffer = SnapshotBuffer.newBySize(Interpolation.replicationRate / 2)
+local localClientBuffer = SnapshotBuffer.new(Interpolation.replicationRate / 2)
 
 -- Other clients buffers
 local remoteClientBuffers = {} :: {[BasePart]: SnapshotBuffer.Buffer}
@@ -33,15 +33,13 @@ RunService.PostSimulation:Connect(function()
 end)
 
 -- Interpolate other characters
-RunService.PreRender:Connect(function()
+RunService.RenderStepped:Connect(function()
     local roots = {}
     local cframes = {}
 
     for rootPart, buffer in pairs(remoteClientBuffers) do
-        local renderTime = os.clock() - Interpolation.bufferDelay 
+        local renderTime = os.clock() - Interpolation.bufferDelay
         local snapshotA, snapshotB = SnapshotBuffer.findClosestSnapshot(buffer, renderTime)
-
-        print(snapshotA, snapshotB, renderTime)
 
         if snapshotA and snapshotB then
             local newCFrame = Interpolation.getCFrame(snapshotA, snapshotB, renderTime)
@@ -66,7 +64,7 @@ Zap.BroadcastReplication.SetCallback(function(data)
             -- Add snapshot to the remote client's buffers
             if not remoteClientBuffers[v.root] then
                 -- Todo: delete snapshot log when character dies
-                remoteClientBuffers[v.root] = SnapshotBuffer.new(Interpolation.bufferDelay, Interpolation.packetFrequency)
+                remoteClientBuffers[v.root] = SnapshotBuffer.new(Interpolation.replicationRate / 2)
             end
 
             SnapshotBuffer.addSnapshot(remoteClientBuffers[v.root], data.frame, v.cframe)

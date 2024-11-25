@@ -11,18 +11,7 @@ export type Snapshot = {
 
 local SnapshotBuffer = {}
 
-function SnapshotBuffer.new(bufferDelay: number, packetFrequency: number): Buffer
-    local bufferSize = math.ceil(bufferDelay / packetFrequency)
-
-    print(bufferSize)
-
-    return {
-        snapshots = {},
-        bufferSize = bufferSize,
-    }
-end
-
-function SnapshotBuffer.newBySize(bufferSize: number): Buffer
+function SnapshotBuffer.new(bufferSize: number): Buffer
     return {
         snapshots = {},
         bufferSize = bufferSize,

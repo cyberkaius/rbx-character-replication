@@ -21,7 +21,7 @@ Players.PlayerAdded:Connect(function(player: Player)
 		root.Anchored = true
 
         if not playerSnapshots[root] then
-            playerSnapshots[root] = SnapshotBuffer.newBySize(bufferSize)
+            playerSnapshots[root] = SnapshotBuffer.new(bufferSize)
         end    
     end)
 
@@ -66,13 +66,8 @@ RunService.Heartbeat:Connect(function()
 			})	
 		end
 		
-		-- Interpolate players on server positions
 		if (#cframes == #roots) and (#cframes > 0) and (#roots > 0) then
-			-- Broadcast replication to all clients
-			
-
-			-- Move characters on serve
-			--Workspace:BulkMoveTo(roots, cframes)
+			Workspace:BulkMoveTo(roots, cframes)
 		end
 
 		currentFrame += 1
