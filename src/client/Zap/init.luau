@@ -112,6 +112,9 @@ if not RunService:IsRunning() then
 		BroadcastReplication = table.freeze({
 			SetCallback = noop
 		}),
+		UpdateEntity = table.freeze({
+			SetCallback = noop
+		}),
 	}) :: Events
 end
 if RunService:IsServer() then
@@ -141,9 +144,40 @@ end
 
 RunService.Heartbeat:Connect(SendEvents)
 
-local events = table.create(2)
-local event_queue: { [number]: { any } } = table.create(2)
+local events = table.create(3)
+local event_queue: { [number]: { any } } = table.create(3)
 event_queue[2] = {}
+event_queue[3] = {}
+reliable.OnClientEvent:Connect(function(buff, inst)
+	incoming_buff = buff
+	incoming_inst = inst
+	incoming_read = 0
+	incoming_ipos = 0
+	local len = buffer.len(buff)
+	while incoming_read < len do
+		local id = buffer.readu8(buff, read(1))
+		if id == 3 then
+			local value
+			value = {}
+			value.entity = buffer.readu8(incoming_buff, read(1))
+			incoming_ipos = incoming_ipos + 1
+			value.root = incoming_inst[incoming_ipos]
+			assert(value.root ~= nil)
+			assert(value.root:IsA("BasePart"))
+			value.add = buffer.readu8(incoming_buff, read(1)) == 1
+			if events[3] then
+				task.spawn(events[3], value)
+			else
+				table.insert(event_queue[3], value)
+				if #event_queue[3] > 64 then
+					warn(`[ZAP] {#event_queue[3]} events in queue for UpdateEntity. Did you forget to attach a listener?`)
+				end
+			end
+		else
+			error("Unknown event id")
+		end
+	end
+end)
 unreliable.OnClientEvent:Connect(function(buff, inst)
 	incoming_buff = buff
 	incoming_inst = inst
@@ -161,10 +195,7 @@ unreliable.OnClientEvent:Connect(function(buff, inst)
 		for i_1 = 1, len_1 do
 			local val_1
 			val_1 = {}
-			incoming_ipos = incoming_ipos + 1
-			val_1.root = incoming_inst[incoming_ipos]
-			assert(val_1.root ~= nil)
-			assert(val_1.root:IsA("BasePart"))
+			val_1.entity = buffer.readu8(incoming_buff, read(1))
 			val_1.x = buffer.readf32(incoming_buff, read(4))
 			val_1.y = buffer.readf32(incoming_buff, read(4))
 			val_1.z = buffer.readf32(incoming_buff, read(4))
@@ -210,7 +241,7 @@ local returns = {
 		SetCallback = function(Callback: (({
 			frame: (number),
 			map: ({ ({
-				root: (BasePart),
+				entity: (number),
 				x: (number),
 				y: (number),
 				z: (number),
@@ -223,6 +254,22 @@ local returns = {
 			event_queue[2] = {}
 			return function()
 				events[2] = nil
+			end
+		end,
+	},
+	UpdateEntity = {
+		SetCallback = function(Callback: (({
+			entity: (number),
+			root: (BasePart),
+			add: (boolean),
+		})) -> ()): () -> ()
+			events[3] = Callback
+			for _, value in event_queue[3] do
+				task.spawn(Callback, value)
+			end
+			event_queue[3] = {}
+			return function()
+				events[3] = nil
 			end
 		end,
 	},

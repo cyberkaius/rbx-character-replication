@@ -116,6 +116,13 @@ if not RunService:IsRunning() then
 			FireList = noop,
 			FireSet = noop
 		}),
+		UpdateEntity = table.freeze({
+			Fire = noop,
+			FireAll = noop,
+			FireExcept = noop,
+			FireList = noop,
+			FireSet = noop
+		}),
 	}) :: Events
 end
 local Players = game:GetService("Players")
@@ -177,7 +184,7 @@ end
 
 RunService.Heartbeat:Connect(SendEvents)
 
-local events = table.create(2)
+local events = table.create(3)
 unreliable.OnServerEvent:Connect(function(player, buff, inst)
 	incoming_buff = buff
 	incoming_inst = inst
@@ -203,7 +210,7 @@ local returns = {
 		Fire = function(Player: Player, Value: ({
 			frame: (number),
 			map: ({ ({
-				root: (BasePart),
+				entity: (number),
 				x: (number),
 				y: (number),
 				z: (number),
@@ -221,8 +228,8 @@ local returns = {
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
 				local val_1 = Value.map[i_1]
-				assert(val_1.root:IsA("BasePart"))
-				table.insert(outgoing_inst, val_1.root)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_1.entity)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.x)
 				alloc(4)
@@ -237,7 +244,7 @@ local returns = {
 		FireAll = function(Value: ({
 			frame: (number),
 			map: ({ ({
-				root: (BasePart),
+				entity: (number),
 				x: (number),
 				y: (number),
 				z: (number),
@@ -255,8 +262,8 @@ local returns = {
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
 				local val_1 = Value.map[i_1]
-				assert(val_1.root:IsA("BasePart"))
-				table.insert(outgoing_inst, val_1.root)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_1.entity)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.x)
 				alloc(4)
@@ -271,7 +278,7 @@ local returns = {
 		FireExcept = function(Except: Player, Value: ({
 			frame: (number),
 			map: ({ ({
-				root: (BasePart),
+				entity: (number),
 				x: (number),
 				y: (number),
 				z: (number),
@@ -289,8 +296,8 @@ local returns = {
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
 				local val_1 = Value.map[i_1]
-				assert(val_1.root:IsA("BasePart"))
-				table.insert(outgoing_inst, val_1.root)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_1.entity)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.x)
 				alloc(4)
@@ -309,7 +316,7 @@ local returns = {
 		FireList = function(List: { Player }, Value: ({
 			frame: (number),
 			map: ({ ({
-				root: (BasePart),
+				entity: (number),
 				x: (number),
 				y: (number),
 				z: (number),
@@ -327,8 +334,8 @@ local returns = {
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
 				local val_1 = Value.map[i_1]
-				assert(val_1.root:IsA("BasePart"))
-				table.insert(outgoing_inst, val_1.root)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_1.entity)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.x)
 				alloc(4)
@@ -345,7 +352,7 @@ local returns = {
 		FireSet = function(Set: { [Player]: true }, Value: ({
 			frame: (number),
 			map: ({ ({
-				root: (BasePart),
+				entity: (number),
 				x: (number),
 				y: (number),
 				z: (number),
@@ -363,8 +370,8 @@ local returns = {
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
 				local val_1 = Value.map[i_1]
-				assert(val_1.root:IsA("BasePart"))
-				table.insert(outgoing_inst, val_1.root)
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_1.entity)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.x)
 				alloc(4)
@@ -376,6 +383,118 @@ local returns = {
 			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)
 			for player in Set do
 				unreliable:FireClient(player, buff, outgoing_inst)
+			end
+		end,
+	},
+	UpdateEntity = {
+		Fire = function(Player: Player, Value: ({
+			entity: (number),
+			root: (BasePart),
+			add: (boolean),
+		}))
+			load_player(Player)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
+			assert(Value.root:IsA("BasePart"))
+			table.insert(outgoing_inst, Value.root)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
+			player_map[Player] = save()
+		end,
+		FireAll = function(Value: ({
+			entity: (number),
+			root: (BasePart),
+			add: (boolean),
+		}))
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
+			assert(Value.root:IsA("BasePart"))
+			table.insert(outgoing_inst, Value.root)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+		end,
+		FireExcept = function(Except: Player, Value: ({
+			entity: (number),
+			root: (BasePart),
+			add: (boolean),
+		}))
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
+			assert(Value.root:IsA("BasePart"))
+			table.insert(outgoing_inst, Value.root)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				if player ~= Except then
+					load_player(player)
+					alloc(used)
+					buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+					table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+					player_map[player] = save()
+				end
+			end
+		end,
+		FireList = function(List: { Player }, Value: ({
+			entity: (number),
+			root: (BasePart),
+			add: (boolean),
+		}))
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
+			assert(Value.root:IsA("BasePart"))
+			table.insert(outgoing_inst, Value.root)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in List do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+		end,
+		FireSet = function(Set: { [Player]: true }, Value: ({
+			entity: (number),
+			root: (BasePart),
+			add: (boolean),
+		}))
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
+			assert(Value.root:IsA("BasePart"))
+			table.insert(outgoing_inst, Value.root)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for player in Set do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
 			end
 		end,
 	},

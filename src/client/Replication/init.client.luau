@@ -21,7 +21,18 @@ local localClientBuffer = SnapshotBuffer.new(Interpolation.replicationRate / 2)
 -- Other clients buffers
 local remoteClientBuffers = {} :: {[BasePart]: SnapshotBuffer.Buffer}
 
--- Replicate locael position to server
+-- Get entity updates
+local remoteClientRoots = {} :: {Instance}
+
+Zap.UpdateEntity.SetCallback(function(data)
+    if data.add then
+        remoteClientRoots[data.entity] = data.root
+    else
+        remoteClientRoots[data.entity] = nil
+    end
+end)
+
+-- Replicate local position to server
 RunService.PostSimulation:Connect(function()
     if os.clock() - lastTick >= Interpolation.packetFrequency then
         lastTick = os.clock()
@@ -64,7 +75,7 @@ Zap.BroadcastReplication.SetCallback(function(data)
             y = v.y, 
             z = v.z
         }
-        
+
         if v.root == root then
             -- Add snapshot to the local player's buffer
             SnapshotBuffer.addSnapshot(localClientBuffer, data.frame, posData)

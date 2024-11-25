@@ -6,8 +6,9 @@ local Workspace = game:GetService("Workspace")
 local Zap = require(script.Parent.Zap)
 local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
 local SnapshotBuffer = require(ReplicatedStorage.Shared.Replication.SnapshotBuffer)
+local EntityList = require(script.EntityList)
 
-local playerSnapshots = {} :: {[BasePart]: SnapshotBuffer.Buffer}
+local playerSnapshots = {} :: {SnapshotBuffer.Buffer}
 
 local bufferSize = Interpolation.replicationRate / 2
 
@@ -16,18 +17,38 @@ Players.PlayerAdded:Connect(function(player: Player)
     player.CharacterAdded:Connect(function(character: Model)
         local root = character:WaitForChild("HumanoidRootPart") :: BasePart
 
+		local key = EntityList.add(root)
+
+		Zap.UpdateEntity.FireExcept(player, {
+			entity = key,
+			root = root,
+			add = true
+		})
+
 		-- Disable default replication by anchoring
 		task.wait()
 		root.Anchored = true
 
-        if not playerSnapshots[root] then
-            playerSnapshots[root] = SnapshotBuffer.new(bufferSize)
-        end    
+        if not playerSnapshots[key] then
+            playerSnapshots[key] = SnapshotBuffer.new(bufferSize)
+        end
     end)
 
     player.CharacterRemoving:Connect(function(character: Model)
         local root = character:WaitForChild("HumanoidRootPart") :: BasePart
-        playerSnapshots[root] = nil
+
+		local key = EntityList.getKey(root)
+
+		if key then
+			playerSnapshots[key] = nil
+			EntityList.remove(key)	
+
+			Zap.UpdateEntity.FireExcept(player, {
+				entity = key,
+				root = root,
+				add = false
+			})
+		end	
     end)
 end)
 

@@ -22,10 +22,21 @@ event BroadcastReplication = {
 	data: struct {
 		frame: u8,
 		map: struct {
-			root: Instance(BasePart),
+			entity: u8,
 			x: f32,
 			y: f32,
 			z: f32,
 		}[1 .. 31]
+	}
+}
+
+event UpdateEntity = {
+	from: Server,
+	type: Reliable,
+	call: SingleAsync,
+	data: struct {
+		entity: u8,
+		root: Instance(BasePart),
+		add: boolean
 	}
 }
