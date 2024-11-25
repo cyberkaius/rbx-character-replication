@@ -4,11 +4,11 @@
 -- When character leaves, remove the entity number from the list and tell the client
 -- This way only a number has to be sent over to specify what root to update instead of a whole instance.
 
-local EntityList = {}
+local Entities = {}
 
 local list = {} :: {Instance?}
 
-function EntityList.add(root: Instance): number
+function Entities.add(root: Instance): number
     for i = 1, #list do 
         if list[i] == nil then
             list[i] = root
@@ -22,7 +22,7 @@ function EntityList.add(root: Instance): number
     return #list
 end
 
-function EntityList.getInstance(key: number): Instance?
+function Entities.getInstance(key: number): Instance?
     if key >= 1 and key <= #list then
         if list[key] then
             return list[key]
@@ -32,7 +32,7 @@ function EntityList.getInstance(key: number): Instance?
     return
 end
 
-function EntityList.getKey(instance: Instance): number?
+function Entities.getKey(instance: Instance): number?
     for i, v in pairs(list) do
         if v == instance then
             return i
@@ -42,7 +42,7 @@ function EntityList.getKey(instance: Instance): number?
     return
 end
 
-function EntityList.remove(key: number)
+function Entities.remove(key: number)
     if key >= 1 and key <= #list then
         if list[key] then
             list[key] = nil
@@ -50,4 +50,4 @@ function EntityList.remove(key: number)
     end
 end
 
-return EntityList
+return Entities

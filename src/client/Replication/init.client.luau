@@ -62,24 +62,15 @@ RunService.RenderStepped:Connect(function()
     local cframes = {}
 
     for key, buffer in pairs(remoteClientBuffers) do
-        local latest = SnapshotBuffer.getLatestSnapshot(buffer)
+        local renderTime = os.clock() - Interpolation.bufferDelay
+        local snapshotA, snapshotB = SnapshotBuffer.findClosestSnapshot(buffer, renderTime)
 
-        if latest then
-            local newCFrame = CFrame.new(latest.data.x, latest.data.y, latest.data.z)
+        if snapshotA and snapshotB then
+            local newCFrame = Interpolation.getCFrame(snapshotA, snapshotB, renderTime)
+
             table.insert(roots, remoteClientRoots[key])
-            table.insert(cframes, newCFrame)  
+            table.insert(cframes, newCFrame)        
         end
-        
-
-        -- local renderTime = os.clock() - Interpolation.bufferDelay
-        -- local snapshotA, snapshotB = SnapshotBuffer.findClosestSnapshot(buffer, renderTime)
-
-        -- if snapshotA and snapshotB then
-        --     local newCFrame = Interpolation.getCFrame(snapshotA, snapshotB, renderTime)
-
-        --     table.insert(roots, rootPart)
-        --     table.insert(cframes, newCFrame)        
-        -- end
     end
 
     if #roots == #cframes then

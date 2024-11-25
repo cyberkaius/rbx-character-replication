@@ -6,7 +6,7 @@ local Workspace = game:GetService("Workspace")
 local Zap = require(script.Parent.Zap)
 local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
 local SnapshotBuffer = require(ReplicatedStorage.Shared.Replication.SnapshotBuffer)
-local EntityList = require(script.EntityList)
+local Entities = require(script.Entities)
 
 local playerSnapshots = {} :: {SnapshotBuffer.Buffer}
 
@@ -15,7 +15,7 @@ local bufferSize = Interpolation.replicationRate / 2
 -- Create snapshot of roots when character added / removed
 Players.PlayerAdded:Connect(function(player: Player)
     player.CharacterAdded:Connect(function(character: Model)
-		local key = EntityList.add(player)
+		local key = Entities.add(player)
 
 		Zap.UpdateEntity.FireExcept(player, {
 			entity = key,
@@ -32,11 +32,11 @@ Players.PlayerAdded:Connect(function(player: Player)
     end)
 
     player.CharacterRemoving:Connect(function(character: Model)
-		local key = EntityList.getKey(player)
+		local key = Entities.getKey(player)
 
 		if key then
 			playerSnapshots[key] = nil
-			EntityList.remove(key)	
+			Entities.remove(key)	
 
 			Zap.UpdateEntity.FireExcept(player, {
 				entity = key,
@@ -83,7 +83,7 @@ end)
 -- Add snapshot frame
 Zap.RequestReplication.SetCallback(function(player, data)
 	-- Add new player data to snapshot
-	local entityId = EntityList.getKey(player)
+	local entityId = Entities.getKey(player)
 
 	if entityId then
 		SnapshotBuffer.addSnapshot(playerSnapshots[entityId], currentFrame, data)
