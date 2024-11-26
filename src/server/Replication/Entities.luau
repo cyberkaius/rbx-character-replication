@@ -13,6 +13,8 @@ function Entities.add(root: Instance): number
 
     table.insert(list, root)
 
+    -- TODO: block entity list from going past a u8 value (highly unlike to happen anyway)
+
     return #list
 end
 
