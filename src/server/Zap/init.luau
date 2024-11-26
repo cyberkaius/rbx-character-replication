@@ -209,6 +209,7 @@ local returns = {
 	BroadcastReplication = {
 		Fire = function(Player: Player, Value: ({
 			frame: (number),
+			timestamp: (number),
 			map: ({ ({
 				entity: (number),
 				x: (number),
@@ -221,6 +222,8 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.timestamp)
 			local len_1 = #Value.map
 			assert(len_1 >= 1)
 			assert(len_1 <= 31)
@@ -243,6 +246,7 @@ local returns = {
 		end,
 		FireAll = function(Value: ({
 			frame: (number),
+			timestamp: (number),
 			map: ({ ({
 				entity: (number),
 				x: (number),
@@ -255,6 +259,8 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.timestamp)
 			local len_1 = #Value.map
 			assert(len_1 >= 1)
 			assert(len_1 <= 31)
@@ -277,6 +283,7 @@ local returns = {
 		end,
 		FireExcept = function(Except: Player, Value: ({
 			frame: (number),
+			timestamp: (number),
 			map: ({ ({
 				entity: (number),
 				x: (number),
@@ -289,6 +296,8 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.timestamp)
 			local len_1 = #Value.map
 			assert(len_1 >= 1)
 			assert(len_1 <= 31)
@@ -315,6 +324,7 @@ local returns = {
 		end,
 		FireList = function(List: { Player }, Value: ({
 			frame: (number),
+			timestamp: (number),
 			map: ({ ({
 				entity: (number),
 				x: (number),
@@ -327,6 +337,8 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.timestamp)
 			local len_1 = #Value.map
 			assert(len_1 >= 1)
 			assert(len_1 <= 31)
@@ -351,6 +363,7 @@ local returns = {
 		end,
 		FireSet = function(Set: { [Player]: true }, Value: ({
 			frame: (number),
+			timestamp: (number),
 			map: ({ ({
 				entity: (number),
 				x: (number),
@@ -363,6 +376,8 @@ local returns = {
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.timestamp)
 			local len_1 = #Value.map
 			assert(len_1 >= 1)
 			assert(len_1 <= 31)

@@ -82,9 +82,14 @@ end)
 Zap.RequestReplication.SetCallback(function(player, data)
 	-- Add new player data to snapshot
 	local entityId = Entities.getKey(player)
+	local currentTime = os.clock() -- To do: Switch to a u8 tick rate, that is multiplied by 1/60, and wraps around back to 0
 
 	if entityId then
-		SnapshotBuffer.addSnapshot(playerSnapshots[entityId], currentFrame, data)
+		SnapshotBuffer.addSnapshot(playerSnapshots[entityId], {
+			frame = currentFrame,
+			timestamp = currentTime,
+			transform = data,
+		})
 	end
 
 	-- Send them back other player's data
@@ -108,6 +113,7 @@ Zap.RequestReplication.SetCallback(function(player, data)
 	if #map > 0 then
 		Zap.BroadcastReplication.Fire(player, {
 			frame = currentFrame,
+			timestamp = currentTime,
 			map = map
 		})	
 	end

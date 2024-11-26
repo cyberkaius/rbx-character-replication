@@ -188,6 +188,7 @@ unreliable.OnClientEvent:Connect(function(buff, inst)
 		local value
 		value = {}
 		value.frame = buffer.readu8(incoming_buff, read(1))
+		value.timestamp = buffer.readu8(incoming_buff, read(1))
 		value.map = {}
 		local len_1 = buffer.readu16(incoming_buff, read(2))
 		assert(len_1 >= 1)
@@ -240,6 +241,7 @@ local returns = {
 	BroadcastReplication = {
 		SetCallback = function(Callback: (({
 			frame: (number),
+			timestamp: (number),
 			map: ({ ({
 				entity: (number),
 				x: (number),

@@ -62,11 +62,11 @@ RunService.RenderStepped:Connect(function()
     local cframes = {}
 
     for key, buffer in pairs(remoteClientBuffers) do
-        local renderTime = os.clock() - Interpolation.bufferDelay
-        local snapshotA, snapshotB = SnapshotBuffer.findClosestSnapshot(buffer, renderTime)
+        local renderAt = os.clock() - Interpolation.bufferDelay - Interpolation.packetFrequency
+        local snapshotA, snapshotB = SnapshotBuffer.findClosestSnapshot(buffer, renderAt)
 
         if snapshotA and snapshotB then
-            local newCFrame = Interpolation.getCFrame(snapshotA, snapshotB, renderTime)
+            local newCFrame = Interpolation.getCFrame(snapshotA, snapshotB, renderAt)
 
             table.insert(roots, remoteClientRoots[key])
             table.insert(cframes, newCFrame)        
@@ -80,7 +80,11 @@ end)
 
 -- Receive packets from server
 Zap.BroadcastReplication.SetCallback(function(data)
-    SnapshotBuffer.addSnapshot(localClientBuffer, data.frame, queuedTransform)
+    SnapshotBuffer.addSnapshot(localClientBuffer, {
+        frame = data.frame,
+        timestamp = data.timestamp,
+        transform = queuedTransform
+    })
 
     for i, v in pairs(data.map) do
         local transform = {
@@ -90,7 +94,11 @@ Zap.BroadcastReplication.SetCallback(function(data)
         }
 
         if remoteClientRoots[v.entity] and remoteClientBuffers[v.entity]then
-            SnapshotBuffer.addSnapshot(remoteClientBuffers[v.entity], data.frame, transform)
+            SnapshotBuffer.addSnapshot(remoteClientBuffers[v.entity], {
+                frame = data.frame,
+                timestamp = data.timestamp,
+                transform = transform
+            })
         end
     end
 end)

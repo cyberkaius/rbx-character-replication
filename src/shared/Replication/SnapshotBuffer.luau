@@ -6,7 +6,7 @@ export type Buffer = {
 }
 
 export type Snapshot = {
-    frameNumber: number,
+    frame: number,
     timestamp: number,
     transform: Transform.Transform
 }
@@ -24,16 +24,12 @@ function SnapshotBuffer.getSnapshots(self: Buffer): {Snapshot}
     return self.snapshots
 end
 
-function SnapshotBuffer.addSnapshot(self: Buffer, frame: number, transform: Transform.Transform)
+function SnapshotBuffer.addSnapshot(self: Buffer, snapshot: Snapshot)
     if #self.snapshots + 1 > self.bufferSize then
         table.remove(self.snapshots, 1)
     end
 
-    table.insert(self.snapshots, {
-        frameNumber = frame,
-        timestamp = os.clock(),
-        transform = transform
-    })
+    table.insert(self.snapshots, snapshot)
 end
 
 function SnapshotBuffer.getLatestSnapshot(self: Buffer): Snapshot?

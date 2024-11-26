@@ -21,6 +21,7 @@ event BroadcastReplication = {
 	call: SingleAsync,
 	data: struct {
 		frame: u8,
+		timestamp: u8,
 		map: struct {
 			entity: u8,
 			x: f32,
