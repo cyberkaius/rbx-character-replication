@@ -187,12 +187,11 @@ unreliable.OnClientEvent:Connect(function(buff, inst)
 	if id == 2 then
 		local value
 		value = {}
-		value.frame = buffer.readu8(incoming_buff, read(1))
-		value.timestamp = buffer.readu8(incoming_buff, read(1))
+		value.tick = buffer.readu8(incoming_buff, read(1))
 		value.map = {}
 		local len_1 = buffer.readu16(incoming_buff, read(2))
 		assert(len_1 >= 1)
-		assert(len_1 <= 31)
+		assert(len_1 <= 50)
 		for i_1 = 1, len_1 do
 			local val_1
 			val_1 = {}
@@ -200,6 +199,7 @@ unreliable.OnClientEvent:Connect(function(buff, inst)
 			val_1.x = buffer.readf32(incoming_buff, read(4))
 			val_1.y = buffer.readf32(incoming_buff, read(4))
 			val_1.z = buffer.readf32(incoming_buff, read(4))
+			val_1.yRotation = buffer.readf32(incoming_buff, read(4))
 			value.map[i_1] = val_1
 		end
 		if events[2] then
@@ -221,6 +221,7 @@ local returns = {
 			x: (number),
 			y: (number),
 			z: (number),
+			yRotation: (number),
 		}))
 			local saved = save()
 			load_empty()
@@ -232,6 +233,8 @@ local returns = {
 			buffer.writef32(outgoing_buff, outgoing_apos, Value.y)
 			alloc(4)
 			buffer.writef32(outgoing_buff, outgoing_apos, Value.z)
+			alloc(4)
+			buffer.writef32(outgoing_buff, outgoing_apos, Value.yRotation)
 			local buff = buffer.create(outgoing_used)
 			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)
 			unreliable:FireServer(buff, outgoing_inst)
@@ -240,13 +243,13 @@ local returns = {
 	},
 	BroadcastReplication = {
 		SetCallback = function(Callback: (({
-			frame: (number),
-			timestamp: (number),
+			tick: (number),
 			map: ({ ({
 				entity: (number),
 				x: (number),
 				y: (number),
 				z: (number),
+				yRotation: (number),
 			}) }),
 		})) -> ()): () -> ()
 			events[2] = Callback

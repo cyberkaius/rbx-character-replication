@@ -1,7 +1,8 @@
 export type Transform = {
     x: number,
     y: number,
-    z: number
+    z: number,
+    yRotation: number,
 }
 
 -- TODO: make function to parse transform into CFrame

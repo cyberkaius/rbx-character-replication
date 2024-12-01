@@ -18,6 +18,10 @@ function Entities.add(root: Instance): number
     return #list
 end
 
+function Entities.getList()
+    return list
+end
+
 function Entities.getInstance(key: number): Instance?
     if key >= 1 and key <= #list then
         if list[key] then

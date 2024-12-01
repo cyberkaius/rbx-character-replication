@@ -197,6 +197,7 @@ unreliable.OnServerEvent:Connect(function(player, buff, inst)
 		value.x = buffer.readf32(incoming_buff, read(4))
 		value.y = buffer.readf32(incoming_buff, read(4))
 		value.z = buffer.readf32(incoming_buff, read(4))
+		value.yRotation = buffer.readf32(incoming_buff, read(4))
 		if events[1] then
 			task.spawn(events[1], player, value)
 		end
@@ -208,25 +209,23 @@ local returns = {
 	SendEvents = SendEvents,
 	BroadcastReplication = {
 		Fire = function(Player: Player, Value: ({
-			frame: (number),
-			timestamp: (number),
+			tick: (number),
 			map: ({ ({
 				entity: (number),
 				x: (number),
 				y: (number),
 				z: (number),
+				yRotation: (number),
 			}) }),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.timestamp)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.tick)
 			local len_1 = #Value.map
 			assert(len_1 >= 1)
-			assert(len_1 <= 31)
+			assert(len_1 <= 50)
 			alloc(2)
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
@@ -239,31 +238,31 @@ local returns = {
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.y)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.z)
+				alloc(4)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.yRotation)
 			end
 			local buff = buffer.create(outgoing_used)
 			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)
 			unreliable:FireClient(Player, buff, outgoing_inst)
 		end,
 		FireAll = function(Value: ({
-			frame: (number),
-			timestamp: (number),
+			tick: (number),
 			map: ({ ({
 				entity: (number),
 				x: (number),
 				y: (number),
 				z: (number),
+				yRotation: (number),
 			}) }),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.timestamp)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.tick)
 			local len_1 = #Value.map
 			assert(len_1 >= 1)
-			assert(len_1 <= 31)
+			assert(len_1 <= 50)
 			alloc(2)
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
@@ -276,31 +275,31 @@ local returns = {
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.y)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.z)
+				alloc(4)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.yRotation)
 			end
 			local buff = buffer.create(outgoing_used)
 			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)
 			unreliable:FireAllClients(buff, outgoing_inst)
 		end,
 		FireExcept = function(Except: Player, Value: ({
-			frame: (number),
-			timestamp: (number),
+			tick: (number),
 			map: ({ ({
 				entity: (number),
 				x: (number),
 				y: (number),
 				z: (number),
+				yRotation: (number),
 			}) }),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.timestamp)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.tick)
 			local len_1 = #Value.map
 			assert(len_1 >= 1)
-			assert(len_1 <= 31)
+			assert(len_1 <= 50)
 			alloc(2)
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
@@ -313,6 +312,8 @@ local returns = {
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.y)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.z)
+				alloc(4)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.yRotation)
 			end
 			local buff = buffer.create(outgoing_used)
 			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)
@@ -323,25 +324,23 @@ local returns = {
 			end
 		end,
 		FireList = function(List: { Player }, Value: ({
-			frame: (number),
-			timestamp: (number),
+			tick: (number),
 			map: ({ ({
 				entity: (number),
 				x: (number),
 				y: (number),
 				z: (number),
+				yRotation: (number),
 			}) }),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.timestamp)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.tick)
 			local len_1 = #Value.map
 			assert(len_1 >= 1)
-			assert(len_1 <= 31)
+			assert(len_1 <= 50)
 			alloc(2)
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
@@ -354,6 +353,8 @@ local returns = {
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.y)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.z)
+				alloc(4)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.yRotation)
 			end
 			local buff = buffer.create(outgoing_used)
 			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)
@@ -362,25 +363,23 @@ local returns = {
 			end
 		end,
 		FireSet = function(Set: { [Player]: true }, Value: ({
-			frame: (number),
-			timestamp: (number),
+			tick: (number),
 			map: ({ ({
 				entity: (number),
 				x: (number),
 				y: (number),
 				z: (number),
+				yRotation: (number),
 			}) }),
 		}))
 			load_empty()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 2)
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.frame)
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.timestamp)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.tick)
 			local len_1 = #Value.map
 			assert(len_1 >= 1)
-			assert(len_1 <= 31)
+			assert(len_1 <= 50)
 			alloc(2)
 			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
 			for i_1 = 1, len_1 do
@@ -393,6 +392,8 @@ local returns = {
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.y)
 				alloc(4)
 				buffer.writef32(outgoing_buff, outgoing_apos, val_1.z)
+				alloc(4)
+				buffer.writef32(outgoing_buff, outgoing_apos, val_1.yRotation)
 			end
 			local buff = buffer.create(outgoing_used)
 			buffer.copy(buff, 0, outgoing_buff, 0, outgoing_used)
@@ -518,6 +519,7 @@ local returns = {
 			x: (number),
 			y: (number),
 			z: (number),
+			yRotation: (number),
 		})) -> ()): () -> ()
 			events[1] = Callback
 			return function()

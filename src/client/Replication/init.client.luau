@@ -6,6 +6,7 @@ local Workspace = game:GetService("Workspace")
 local Zap = require(script.Parent.Zap)
 local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
 local SnapshotBuffer = require(ReplicatedStorage.Shared.Replication.SnapshotBuffer)
+local Tick = require(ReplicatedStorage.Shared.Replication.Tick)
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -22,6 +23,7 @@ local queuedTransform = {
     x = root.Position.X,
     y = root.Position.Y,
     z = root.Position.Z,
+    yRotation = root.Rotation.Y
 } 
 
 -- Other clients buffers
@@ -50,6 +52,7 @@ RunService.PostSimulation:Connect(function()
             x = root.Position.X,
             y = root.Position.Y,
             z = root.Position.Z,
+            yRotation = root.Rotation.Y
         }
 
         Zap.RequestReplication.Fire(queuedTransform)
@@ -80,9 +83,18 @@ end)
 
 -- Receive packets from server
 Zap.BroadcastReplication.SetCallback(function(data)
+    if Tick.raw > data.tick then
+        Tick.wrapCounter += 1
+    end
+
+    Tick.raw = data.tick
+
+    local timestamp = Tick.toTimestamp(data.tick)
+
+    print(timestamp)
+
     SnapshotBuffer.addSnapshot(localClientBuffer, {
-        frame = data.frame,
-        timestamp = data.timestamp,
+        timestamp = timestamp,
         transform = queuedTransform
     })
 
@@ -90,13 +102,13 @@ Zap.BroadcastReplication.SetCallback(function(data)
         local transform = {
             x = v.x, 
             y = v.y, 
-            z = v.z
+            z = v.z,
+            yRotation = v.yRotation
         }
 
         if remoteClientRoots[v.entity] and remoteClientBuffers[v.entity]then
             SnapshotBuffer.addSnapshot(remoteClientBuffers[v.entity], {
-                frame = data.frame,
-                timestamp = data.timestamp,
+                timestamp = timestamp,
                 transform = transform
             })
         end

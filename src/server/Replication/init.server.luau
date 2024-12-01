@@ -7,9 +7,71 @@ local Zap = require(script.Parent.Zap)
 local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
 local SnapshotBuffer = require(ReplicatedStorage.Shared.Replication.SnapshotBuffer)
 local Entities = require(script.Entities)
+local Tick = require(ReplicatedStorage.Shared.Replication.Tick)
 
 local playerSnapshots = {} :: {SnapshotBuffer.Buffer}
 
+local lastTick = os.clock()
+
+-- Replicate current snapshots to all clients
+RunService.Heartbeat:Connect(function()
+	if os.clock() - lastTick >= Interpolation.packetFrequency then
+		local map = {} :: {
+			entity: number,
+			x: number,
+			y: number,
+			z: number,
+		}
+
+		for key, snapshot in pairs(playerSnapshots) do
+			local lastSnapshot = SnapshotBuffer.getLatestSnapshot(snapshot)
+
+			if lastSnapshot then
+				map[key] = {
+					entity = key,
+					x = lastSnapshot.transform.x,
+					y = lastSnapshot.transform.y,
+					z = lastSnapshot.transform.z,
+					yRotation = lastSnapshot.transform.yRotation
+				}
+			end	
+		end
+
+		for key, v in Entities.getList() do
+			local player = Entities.getInstance(key) :: Player
+
+			if player then
+				local newMap = table.clone(map)
+				table.remove(newMap, key)
+
+				if #newMap > 0 then
+					Zap.BroadcastReplication.Fire(player, {
+						tick = Tick.raw,
+						map = newMap
+					})	
+				end
+			end
+		end
+
+		print(Tick.toTimestamp(Tick.raw))
+
+		Tick.increment()
+    end
+end)
+
+-- Add snapshot frame to buffers when received
+Zap.RequestReplication.SetCallback(function(player, data)
+	local entityId = Entities.getKey(player)
+
+	if entityId then
+		SnapshotBuffer.addSnapshot(playerSnapshots[entityId], {
+			timestamp = Tick.toTimestamp(Tick.raw),
+			transform = data,
+		})
+	end
+end)
+
+-- TODO: Create humanoid roots for each player in Camera to stop replication
 -- Create snapshot of roots when character added / removed
 Players.PlayerAdded:Connect(function(player: Player)
     player.CharacterAdded:Connect(function(character: Model)
@@ -43,78 +105,4 @@ Players.PlayerAdded:Connect(function(player: Player)
 			})
 		end	
     end)
-end)
-
--- Replicate current snapshots to all clients
-
-local lastTick = os.clock()
-
-local currentFrame = 1
-
-RunService.Heartbeat:Connect(function()
-	if os.clock() - lastTick >= Interpolation.packetFrequency then
-		-- local roots = {}
-		-- local cframes = {}
-
-		-- for key, log in pairs(playerSnapshots) do
-		-- 	local lastSnapshot = SnapshotBuffer.getLatestSnapshot(log)
-
-		-- 	if lastSnapshot then
-		-- 		table.insert(roots, key)
-		-- 		table.insert(cframes, lastSnapshot.data)
-		-- 	end
-		-- end
-		
-		-- -- Interpolate players on server positions
-		-- if (#cframes == #roots) and (#cframes > 0) and (#roots > 0) then
-		-- 	--Workspace:BulkMoveTo(roots, cframes)
-		-- end
-
-		currentFrame += 1
-
-		if currentFrame > Interpolation.replicationRate then
-			currentFrame = 0
-		end
-    end
-end)
-
--- Add snapshot frame
-Zap.RequestReplication.SetCallback(function(player, data)
-	-- Add new player data to snapshot
-	local entityId = Entities.getKey(player)
-	local currentTime = os.clock() -- To do: Switch to a u8 tick rate, that is multiplied by 1/60, and wraps around back to 0
-
-	if entityId then
-		SnapshotBuffer.addSnapshot(playerSnapshots[entityId], {
-			frame = currentFrame,
-			timestamp = currentTime,
-			transform = data,
-		})
-	end
-
-	-- Send them back other player's data
-	local map = {} :: {root: BasePart, cframe: CFrame}
-
-	for key, snapshot in pairs(playerSnapshots) do
-		if key ~= entityId then
-			local lastSnapshot = SnapshotBuffer.getLatestSnapshot(snapshot)
-
-			if lastSnapshot then
-				table.insert(map, {
-					entity = key,
-					x = lastSnapshot.transform.x,
-					y = lastSnapshot.transform.y,
-					z = lastSnapshot.transform.z,
-				})
-			end	
-		end
-	end
-
-	if #map > 0 then
-		Zap.BroadcastReplication.Fire(player, {
-			frame = currentFrame,
-			timestamp = currentTime,
-			map = map
-		})	
-	end
 end)

@@ -12,6 +12,7 @@ event RequestReplication = {
 		x: f32,
 		y: f32,
 		z: f32,
+		yRotation: f32,
 	},
 }
 
@@ -20,14 +21,14 @@ event BroadcastReplication = {
 	type: Unreliable,
 	call: SingleAsync,
 	data: struct {
-		frame: u8,
-		timestamp: u8,
+		tick: u8,
 		map: struct {
 			entity: u8,
 			x: f32,
 			y: f32,
 			z: f32,
-		}[1 .. 31]
+			yRotation: f32,
+		}[1 .. 50]
 	}
 }
 

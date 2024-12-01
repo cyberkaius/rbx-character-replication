@@ -6,7 +6,6 @@ export type Buffer = {
 }
 
 export type Snapshot = {
-    frame: number,
     timestamp: number,
     transform: Transform.Transform
 }
@@ -28,6 +27,8 @@ function SnapshotBuffer.addSnapshot(self: Buffer, snapshot: Snapshot)
     if #self.snapshots + 1 > self.bufferSize then
         table.remove(self.snapshots, 1)
     end
+
+    -- TODO: sort snapshots by timestamp as they can sometimes arrive unordered
 
     table.insert(self.snapshots, snapshot)
 end
