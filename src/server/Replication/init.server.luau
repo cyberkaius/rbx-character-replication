@@ -53,8 +53,6 @@ RunService.Heartbeat:Connect(function()
 			end
 		end
 
-		print(Tick.toTimestamp(Tick.raw))
-
 		Tick.increment()
     end
 end)
@@ -73,6 +71,26 @@ end)
 
 -- TODO: Create humanoid roots for each player in Camera to stop replication
 -- Create snapshot of roots when character added / removed
+
+Zap.RequestEntities.SetCallback(function(player: Player)
+	local entityMap = {}
+
+	for key, plr in Entities.getList() do
+		if plr == player then
+			continue
+		end
+
+		table.insert(entityMap, {
+			entity = key,
+			player = plr :: Player 
+		})
+	end
+	
+	if #entityMap > 0 then
+		Zap.ReturnEntities.Fire(player, entityMap)
+	end	
+end)
+
 Players.PlayerAdded:Connect(function(player: Player)
     player.CharacterAdded:Connect(function(character: Model)
 		local key = Entities.add(player)

@@ -112,6 +112,12 @@ if not RunService:IsRunning() then
 		BroadcastReplication = table.freeze({
 			SetCallback = noop
 		}),
+		RequestEntities = table.freeze({
+			Fire = noop
+		}),
+		ReturnEntities = table.freeze({
+			SetCallback = noop
+		}),
 		UpdateEntity = table.freeze({
 			SetCallback = noop
 		}),
@@ -144,10 +150,11 @@ end
 
 RunService.Heartbeat:Connect(SendEvents)
 
-local events = table.create(3)
-local event_queue: { [number]: { any } } = table.create(3)
+local events = table.create(5)
+local event_queue: { [number]: { any } } = table.create(5)
 event_queue[2] = {}
-event_queue[3] = {}
+event_queue[4] = {}
+event_queue[5] = {}
 reliable.OnClientEvent:Connect(function(buff, inst)
 	incoming_buff = buff
 	incoming_inst = inst
@@ -156,7 +163,31 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 	local len = buffer.len(buff)
 	while incoming_read < len do
 		local id = buffer.readu8(buff, read(1))
-		if id == 3 then
+		if id == 4 then
+			local value
+			value = {}
+			local len_1 = buffer.readu16(incoming_buff, read(2))
+			assert(len_1 >= 1)
+			assert(len_1 <= 50)
+			for i_1 = 1, len_1 do
+				local val_1
+				val_1 = {}
+				val_1.entity = buffer.readu8(incoming_buff, read(1))
+				incoming_ipos = incoming_ipos + 1
+				val_1.player = incoming_inst[incoming_ipos]
+				assert(val_1.player ~= nil)
+				assert(val_1.player:IsA("Player"))
+				value[i_1] = val_1
+			end
+			if events[4] then
+				task.spawn(events[4], value)
+			else
+				table.insert(event_queue[4], value)
+				if #event_queue[4] > 64 then
+					warn(`[ZAP] {#event_queue[4]} events in queue for ReturnEntities. Did you forget to attach a listener?`)
+				end
+			end
+		elseif id == 5 then
 			local value
 			value = {}
 			value.entity = buffer.readu8(incoming_buff, read(1))
@@ -165,12 +196,12 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			assert(value.player ~= nil)
 			assert(value.player:IsA("Player"))
 			value.add = buffer.readu8(incoming_buff, read(1)) == 1
-			if events[3] then
-				task.spawn(events[3], value)
+			if events[5] then
+				task.spawn(events[5], value)
 			else
-				table.insert(event_queue[3], value)
-				if #event_queue[3] > 64 then
-					warn(`[ZAP] {#event_queue[3]} events in queue for UpdateEntity. Did you forget to attach a listener?`)
+				table.insert(event_queue[5], value)
+				if #event_queue[5] > 64 then
+					warn(`[ZAP] {#event_queue[5]} events in queue for UpdateEntity. Did you forget to attach a listener?`)
 				end
 			end
 		else
@@ -241,6 +272,12 @@ local returns = {
 			load(saved)
 		end,
 	},
+	RequestEntities = {
+		Fire = function()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
+		end,
+	},
 	BroadcastReplication = {
 		SetCallback = function(Callback: (({
 			tick: (number),
@@ -262,19 +299,34 @@ local returns = {
 			end
 		end,
 	},
+	ReturnEntities = {
+		SetCallback = function(Callback: (({ ({
+			entity: (number),
+			player: (Player),
+		}) })) -> ()): () -> ()
+			events[4] = Callback
+			for _, value in event_queue[4] do
+				task.spawn(Callback, value)
+			end
+			event_queue[4] = {}
+			return function()
+				events[4] = nil
+			end
+		end,
+	},
 	UpdateEntity = {
 		SetCallback = function(Callback: (({
 			entity: (number),
 			player: (Player),
 			add: (boolean),
 		})) -> ()): () -> ()
-			events[3] = Callback
-			for _, value in event_queue[3] do
+			events[5] = Callback
+			for _, value in event_queue[5] do
 				task.spawn(Callback, value)
 			end
-			event_queue[3] = {}
+			event_queue[5] = {}
 			return function()
-				events[3] = nil
+				events[5] = nil
 			end
 		end,
 	},

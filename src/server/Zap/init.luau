@@ -116,6 +116,16 @@ if not RunService:IsRunning() then
 			FireList = noop,
 			FireSet = noop
 		}),
+		RequestEntities = table.freeze({
+			SetCallback = noop
+		}),
+		ReturnEntities = table.freeze({
+			Fire = noop,
+			FireAll = noop,
+			FireExcept = noop,
+			FireList = noop,
+			FireSet = noop
+		}),
 		UpdateEntity = table.freeze({
 			Fire = noop,
 			FireAll = noop,
@@ -184,7 +194,25 @@ end
 
 RunService.Heartbeat:Connect(SendEvents)
 
-local events = table.create(3)
+local events = table.create(5)
+reliable.OnServerEvent:Connect(function(player, buff, inst)
+	incoming_buff = buff
+	incoming_inst = inst
+	incoming_read = 0
+	incoming_ipos = 0
+	local len = buffer.len(buff)
+	while incoming_read < len do
+		local id = buffer.readu8(buff, read(1))
+		if id == 3 then
+			local value
+			if events[3] then
+				task.spawn(events[3], player, value)
+			end
+		else
+			error("Unknown event id")
+		end
+	end
+end)
 unreliable.OnServerEvent:Connect(function(player, buff, inst)
 	incoming_buff = buff
 	incoming_inst = inst
@@ -402,6 +430,143 @@ local returns = {
 			end
 		end,
 	},
+	ReturnEntities = {
+		Fire = function(Player: Player, Value: ({ ({
+			entity: (number),
+			player: (Player),
+		}) }))
+			load_player(Player)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 4)
+			local len_1 = #Value
+			assert(len_1 >= 1)
+			assert(len_1 <= 50)
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
+			for i_1 = 1, len_1 do
+				local val_1 = Value[i_1]
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_1.entity)
+				assert(val_1.player:IsA("Player"))
+				table.insert(outgoing_inst, val_1.player)
+			end
+			player_map[Player] = save()
+		end,
+		FireAll = function(Value: ({ ({
+			entity: (number),
+			player: (Player),
+		}) }))
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 4)
+			local len_1 = #Value
+			assert(len_1 >= 1)
+			assert(len_1 <= 50)
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
+			for i_1 = 1, len_1 do
+				local val_1 = Value[i_1]
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_1.entity)
+				assert(val_1.player:IsA("Player"))
+				table.insert(outgoing_inst, val_1.player)
+			end
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+		end,
+		FireExcept = function(Except: Player, Value: ({ ({
+			entity: (number),
+			player: (Player),
+		}) }))
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 4)
+			local len_1 = #Value
+			assert(len_1 >= 1)
+			assert(len_1 <= 50)
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
+			for i_1 = 1, len_1 do
+				local val_1 = Value[i_1]
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_1.entity)
+				assert(val_1.player:IsA("Player"))
+				table.insert(outgoing_inst, val_1.player)
+			end
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in Players:GetPlayers() do
+				if player ~= Except then
+					load_player(player)
+					alloc(used)
+					buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+					table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+					player_map[player] = save()
+				end
+			end
+		end,
+		FireList = function(List: { Player }, Value: ({ ({
+			entity: (number),
+			player: (Player),
+		}) }))
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 4)
+			local len_1 = #Value
+			assert(len_1 >= 1)
+			assert(len_1 <= 50)
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
+			for i_1 = 1, len_1 do
+				local val_1 = Value[i_1]
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_1.entity)
+				assert(val_1.player:IsA("Player"))
+				table.insert(outgoing_inst, val_1.player)
+			end
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for _, player in List do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+		end,
+		FireSet = function(Set: { [Player]: true }, Value: ({ ({
+			entity: (number),
+			player: (Player),
+		}) }))
+			load_empty()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 4)
+			local len_1 = #Value
+			assert(len_1 >= 1)
+			assert(len_1 <= 50)
+			alloc(2)
+			buffer.writeu16(outgoing_buff, outgoing_apos, len_1)
+			for i_1 = 1, len_1 do
+				local val_1 = Value[i_1]
+				alloc(1)
+				buffer.writeu8(outgoing_buff, outgoing_apos, val_1.entity)
+				assert(val_1.player:IsA("Player"))
+				table.insert(outgoing_inst, val_1.player)
+			end
+			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
+			for player in Set do
+				load_player(player)
+				alloc(used)
+				buffer.copy(outgoing_buff, outgoing_apos, buff, 0, used)
+				table.move(inst, 1, #inst, #outgoing_inst + 1, outgoing_inst)
+				player_map[player] = save()
+			end
+		end,
+	},
 	UpdateEntity = {
 		Fire = function(Player: Player, Value: ({
 			entity: (number),
@@ -410,7 +575,7 @@ local returns = {
 		}))
 			load_player(Player)
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 5)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
 			assert(Value.player:IsA("Player"))
@@ -426,7 +591,7 @@ local returns = {
 		}))
 			load_empty()
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 5)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
 			assert(Value.player:IsA("Player"))
@@ -449,7 +614,7 @@ local returns = {
 		}))
 			load_empty()
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 5)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
 			assert(Value.player:IsA("Player"))
@@ -474,7 +639,7 @@ local returns = {
 		}))
 			load_empty()
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 5)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
 			assert(Value.player:IsA("Player"))
@@ -497,7 +662,7 @@ local returns = {
 		}))
 			load_empty()
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 5)
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, Value.entity)
 			assert(Value.player:IsA("Player"))
@@ -524,6 +689,14 @@ local returns = {
 			events[1] = Callback
 			return function()
 				events[1] = nil
+			end
+		end,
+	},
+	RequestEntities = {
+		SetCallback = function(Callback: (Player) -> ()): () -> ()
+			events[3] = Callback
+			return function()
+				events[3] = nil
 			end
 		end,
 	},

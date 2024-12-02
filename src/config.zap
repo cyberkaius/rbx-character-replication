@@ -32,6 +32,22 @@ event BroadcastReplication = {
 	}
 }
 
+event RequestEntities = {
+	from: Client,
+	type: Reliable,
+	call: SingleAsync,
+}
+
+event ReturnEntities = {
+	from: Server,
+	type: Reliable,
+	call: SingleAsync,
+	data: struct {
+		entity: u8,
+		player: Instance(Player),
+	}[1 .. 50]
+}
+
 event UpdateEntity = {
 	from: Server,
 	type: Reliable,

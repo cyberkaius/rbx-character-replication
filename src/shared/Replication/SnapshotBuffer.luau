@@ -6,7 +6,7 @@ export type Buffer = {
 }
 
 export type Snapshot = {
-    timestamp: number,
+    timestamp: number, -- store timestamp as a raw tick on client
     transform: Transform.Transform
 }
 
@@ -53,6 +53,11 @@ function SnapshotBuffer.findClosestSnapshot(self: Buffer, renderTime: number): (
             snapshotB = snapshot
             break
         end
+    end
+
+    if snapshotA == nil then
+        snapshotA = self.snapshots[1]
+        snapshotB = self.snapshots[2]
     end
 
     return snapshotA, snapshotB
