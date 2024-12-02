@@ -26,6 +26,8 @@ end
 function Interpolation.getCFrame(snapshotA: SnapshotBuffer.Snapshot, snapshotB: SnapshotBuffer.Snapshot, renderAt: number)
     local alpha = (renderAt - snapshotA.timestamp) / (snapshotB.timestamp - snapshotA.timestamp)
 
+    alpha = math.clamp(alpha, 0, 1)
+
     local positionA = Vector3.new(snapshotA.transform.x, snapshotA.transform.y, snapshotA.transform.z)
     local positionB = Vector3.new(snapshotA.transform.x, snapshotA.transform.y, snapshotA.transform.z)
     
