@@ -112,20 +112,14 @@ if not RunService:IsRunning() then
 		BroadcastReplication = table.freeze({
 			SetCallback = noop
 		}),
-		RequestServerTick = table.freeze({
-			Fire = noop
-		}),
-		ReturnServerTick = table.freeze({
-			SetCallback = noop
-		}),
-		RequestEntities = table.freeze({
-			Fire = noop
-		}),
-		ReturnEntities = table.freeze({
-			SetCallback = noop
-		}),
 		UpdateEntity = table.freeze({
 			SetCallback = noop
+		}),
+		RequestServerTick = table.freeze({
+			Call = noop
+		}),
+		RequestEntities = table.freeze({
+			Call = noop
 		}),
 	}) :: Events
 end
@@ -156,12 +150,13 @@ end
 
 RunService.Heartbeat:Connect(SendEvents)
 
-local events = table.create(7)
-local event_queue: { [number]: { any } } = table.create(7)
+local events = table.create(5)
+local event_queue: { [number]: { any } } = table.create(5)
+local function_call_id = 0
 event_queue[2] = {}
-event_queue[4] = {}
-event_queue[6] = {}
-event_queue[7] = {}
+event_queue[3] = {}
+event_queue[4] = table.create(255)
+event_queue[5] = table.create(255)
 reliable.OnClientEvent:Connect(function(buff, inst)
 	incoming_buff = buff
 	incoming_inst = inst
@@ -170,42 +165,7 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 	local len = buffer.len(buff)
 	while incoming_read < len do
 		local id = buffer.readu8(buff, read(1))
-		if id == 4 then
-			local value
-			value = buffer.readu8(incoming_buff, read(1))
-			if events[4] then
-				task.spawn(events[4], value)
-			else
-				table.insert(event_queue[4], value)
-				if #event_queue[4] > 64 then
-					warn(`[ZAP] {#event_queue[4]} events in queue for ReturnServerTick. Did you forget to attach a listener?`)
-				end
-			end
-		elseif id == 6 then
-			local value
-			value = {}
-			local len_1 = buffer.readu16(incoming_buff, read(2))
-			assert(len_1 >= 1)
-			assert(len_1 <= 50)
-			for i_1 = 1, len_1 do
-				local val_1
-				val_1 = {}
-				val_1.entity = buffer.readu8(incoming_buff, read(1))
-				incoming_ipos = incoming_ipos + 1
-				val_1.player = incoming_inst[incoming_ipos]
-				assert(val_1.player ~= nil)
-				assert(val_1.player:IsA("Player"))
-				value[i_1] = val_1
-			end
-			if events[6] then
-				task.spawn(events[6], value)
-			else
-				table.insert(event_queue[6], value)
-				if #event_queue[6] > 64 then
-					warn(`[ZAP] {#event_queue[6]} events in queue for ReturnEntities. Did you forget to attach a listener?`)
-				end
-			end
-		elseif id == 7 then
+		if id == 3 then
 			local value
 			value = {}
 			value.entity = buffer.readu8(incoming_buff, read(1))
@@ -214,14 +174,43 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			assert(value.player ~= nil)
 			assert(value.player:IsA("Player"))
 			value.add = buffer.readu8(incoming_buff, read(1)) == 1
-			if events[7] then
-				task.spawn(events[7], value)
+			if events[3] then
+				task.spawn(events[3], value)
 			else
-				table.insert(event_queue[7], value)
-				if #event_queue[7] > 64 then
-					warn(`[ZAP] {#event_queue[7]} events in queue for UpdateEntity. Did you forget to attach a listener?`)
+				table.insert(event_queue[3], value)
+				if #event_queue[3] > 64 then
+					warn(`[ZAP] {#event_queue[3]} events in queue for UpdateEntity. Did you forget to attach a listener?`)
 				end
 			end
+		elseif id == 4 then
+			local call_id = buffer.readu8(incoming_buff, read(1))
+			local value
+			value = buffer.readu8(incoming_buff, read(1))
+			task.spawn(event_queue[4][call_id], value)
+			event_queue[4][call_id] = nil
+		elseif id == 5 then
+			local call_id = buffer.readu8(incoming_buff, read(1))
+			local value
+			if buffer.readu8(incoming_buff, read(1)) == 1 then
+				value = {}
+				local len_1 = buffer.readu16(incoming_buff, read(2))
+				assert(len_1 >= 1)
+				assert(len_1 <= 50)
+				for i_1 = 1, len_1 do
+					local val_1
+					val_1 = {}
+					val_1.entity = buffer.readu8(incoming_buff, read(1))
+					incoming_ipos = incoming_ipos + 1
+					val_1.player = incoming_inst[incoming_ipos]
+					assert(val_1.player ~= nil)
+					assert(val_1.player:IsA("Player"))
+					value[i_1] = val_1
+				end
+			else
+				value = nil
+			end
+			task.spawn(event_queue[5][call_id], value)
+			event_queue[5][call_id] = nil
 		else
 			error("Unknown event id")
 		end
@@ -290,18 +279,6 @@ local returns = {
 			load(saved)
 		end,
 	},
-	RequestServerTick = {
-		Fire = function()
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
-		end,
-	},
-	RequestEntities = {
-		Fire = function()
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 5)
-		end,
-	},
 	BroadcastReplication = {
 		SetCallback = function(Callback: (({
 			tick: (number),
@@ -323,47 +300,57 @@ local returns = {
 			end
 		end,
 	},
-	ReturnServerTick = {
-		SetCallback = function(Callback: ((number)) -> ()): () -> ()
-			events[4] = Callback
-			for _, value in event_queue[4] do
-				task.spawn(Callback, value)
-			end
-			event_queue[4] = {}
-			return function()
-				events[4] = nil
-			end
-		end,
-	},
-	ReturnEntities = {
-		SetCallback = function(Callback: (({ ({
-			entity: (number),
-			player: (Player),
-		}) })) -> ()): () -> ()
-			events[6] = Callback
-			for _, value in event_queue[6] do
-				task.spawn(Callback, value)
-			end
-			event_queue[6] = {}
-			return function()
-				events[6] = nil
-			end
-		end,
-	},
 	UpdateEntity = {
 		SetCallback = function(Callback: (({
 			entity: (number),
 			player: (Player),
 			add: (boolean),
 		})) -> ()): () -> ()
-			events[7] = Callback
-			for _, value in event_queue[7] do
+			events[3] = Callback
+			for _, value in event_queue[3] do
 				task.spawn(Callback, value)
 			end
-			event_queue[7] = {}
+			event_queue[3] = {}
 			return function()
-				events[7] = nil
+				events[3] = nil
 			end
+		end,
+	},
+	RequestServerTick = {
+		Call = function(): (number)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 4)
+			function_call_id += 1
+			function_call_id %= 256
+			if event_queue[4][function_call_id] then
+				function_call_id -= 1
+				error("Zap has more than 256 calls awaiting a response, and therefore this packet has been dropped")
+			end
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, function_call_id)
+			event_queue[4][function_call_id] = coroutine.running()
+			local async_value = coroutine.yield()
+			return async_value
+		end,
+	},
+	RequestEntities = {
+		Call = function(): (({ ({
+			entity: (number),
+			player: (Player),
+		}) })?)
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 5)
+			function_call_id += 1
+			function_call_id %= 256
+			if event_queue[5][function_call_id] then
+				function_call_id -= 1
+				error("Zap has more than 256 calls awaiting a response, and therefore this packet has been dropped")
+			end
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, function_call_id)
+			event_queue[5][function_call_id] = coroutine.running()
+			local async_value = coroutine.yield()
+			return async_value
 		end,
 	},
 }

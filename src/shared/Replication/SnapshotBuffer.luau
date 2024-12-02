@@ -23,23 +23,37 @@ function SnapshotBuffer.getSnapshots(self: Buffer): {Snapshot}
     return self.snapshots
 end
 
--- If the received snapshot timestamp is the same then overwrite it dont duplicate!!!!!!!!
-function SnapshotBuffer.addSnapshot(self: Buffer, snapshot: Snapshot)
-    if #self.snapshots + 1 > self.bufferSize then
-        table.remove(self.snapshots, 1)
-    end
-
-    -- TODO: sort snapshots by timestamp as they can sometimes arrive unordered
-
-    table.insert(self.snapshots, snapshot)
-end
-
 function SnapshotBuffer.getLatestSnapshot(self: Buffer): Snapshot?
     if #self.snapshots > 1 then
         return self.snapshots[#self.snapshots]
     end
 
     return nil
+end
+
+function SnapshotBuffer.addSnapshot(self: Buffer, snapshot: Snapshot)
+    if #self.snapshots + 1 > self.bufferSize then
+        table.remove(self.snapshots, 1)
+    end
+
+    -- Overwrite snapshots with duplicate timestamps
+    for i, existingSnapshot in self.snapshots do
+        if existingSnapshot.timestamp == snapshot.timestamp then
+            self.snapshots[i] = snapshot
+            return
+        end
+    end
+
+    table.insert(self.snapshots, snapshot)
+
+    local latestSnapshot = SnapshotBuffer.getLatestSnapshot(self)
+
+    -- Sort snapshots if one arrives unordered
+    if latestSnapshot and latestSnapshot.timestamp > snapshot.timestamp then
+        table.sort(self.snapshots, function(a, b)
+            return a.timestamp < b.timestamp
+        end)
+    end
 end
 
 function SnapshotBuffer.findClosestSnapshot(self: Buffer, renderTime: number): (Snapshot?, Snapshot?)

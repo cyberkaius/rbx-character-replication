@@ -69,15 +69,13 @@ Zap.RequestReplication.SetCallback(function(player, data)
 	end
 end)
 
--- Give player the time
-
+-- Give player the server tick
 Zap.RequestServerTick.SetCallback(function(player)
-	Zap.ReturnServerTick.Fire(player, Tick.raw)
+	return Tick.raw
 end)
 
 -- TODO: Create humanoid roots for each player in Camera to stop replication
 -- Create snapshot of roots when character added / removed
-
 Zap.RequestEntities.SetCallback(function(player: Player)
 	local entityMap = {}
 
@@ -93,8 +91,10 @@ Zap.RequestEntities.SetCallback(function(player: Player)
 	end
 	
 	if #entityMap > 0 then
-		Zap.ReturnEntities.Fire(player, entityMap)
+		return entityMap
 	end	
+
+	return nil
 end)
 
 Players.PlayerAdded:Connect(function(player: Player)

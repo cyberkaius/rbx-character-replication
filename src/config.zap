@@ -32,33 +32,17 @@ event BroadcastReplication = {
 	}
 }
 
-event RequestServerTick = {
-	from: Client,
-	type: Reliable,
-	call: SingleAsync,
+funct RequestServerTick = {
+    call: Async,
+    rets: u8
 }
 
-event ReturnServerTick = {
-	from: Server,
-	type: Reliable,
-	call: SingleAsync,
-	data: u8
-}
-
-event RequestEntities = {
-	from: Client,
-	type: Reliable,
-	call: SingleAsync,
-}
-
-event ReturnEntities = {
-	from: Server,
-	type: Reliable,
-	call: SingleAsync,
-	data: struct {
+funct RequestEntities = {
+    call: Async,
+    rets: struct {
 		entity: u8,
 		player: Instance(Player),
-	}[1 .. 50]
+	}[1 .. 50]?
 }
 
 event UpdateEntity = {

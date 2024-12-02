@@ -30,9 +30,9 @@ function Interpolation.getCFrame(snapshotA: SnapshotBuffer.Snapshot, snapshotB: 
 
     --print(snapshotB.timestamp - snapshotA.timestamp)
     --print("SnapshotA Timestamp:" .. snapshotA.timestamp)
-    --print("RenderAt Timestamp:" .. renderAt)
+   -- print("RenderAt Timestamp:" .. renderAt)
     --print("SnapshotB Timestamp:" .. snapshotB.timestamp)
-    -- print("Alpha:" .. alpha)
+    --print("Alpha:" .. alpha)
     --print("-------------")
 
     local positionA = Vector3.new(snapshotA.transform.x, snapshotA.transform.y, snapshotA.transform.z)

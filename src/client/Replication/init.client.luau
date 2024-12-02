@@ -15,7 +15,6 @@ local root = character:WaitForChild("HumanoidRootPart")
 root.Anchored = false
 
 local lastTick = os.clock()
-local currentTime = 0
 
 local queuedTransform = {
     x = root.CFrame.X,
@@ -34,21 +33,18 @@ local remoteClientBuffers = {} :: {SnapshotBuffer.Buffer}
 local remoteClientRoots = {} :: {Instance?}
 
 -- Get server tick
-Zap.RequestServerTick.Fire()
-Zap.ReturnServerTick.SetCallback(function(tick)
-    currentTime = Tick.toTimestamp(tick)
-end)
+local currentTime = Tick.toTimestamp(Zap.RequestServerTick.Call())
 
 -- Get list of entities
-Zap.RequestEntities.Fire()
-Zap.ReturnEntities.SetCallback(function(data)
-    -- Updating entities
-    for i, entry in data do
+local providedEntities = Zap.RequestEntities.Call()
+
+if providedEntities then
+    for i, entry in providedEntities do
         local remoteRoot = entry.player.Character and entry.player.Character:FindFirstChild("HumanoidRootPart")
         remoteClientRoots[entry.entity] = remoteRoot
         remoteClientBuffers[entry.entity] = SnapshotBuffer.new(Interpolation.replicationRate * 5)
-    end
-end)
+    end    
+end
 
 Zap.UpdateEntity.SetCallback(function(data)
     if data.add then
@@ -77,26 +73,24 @@ RunService.PostSimulation:Connect(function()
     end
 end)
 
+local lastrenderAt = 0
+
 -- Interpolate other characters
 RunService.RenderStepped:Connect(function(deltaTime: number)
-    currentTime += deltaTime
-
-    if next(remoteClientBuffers) == nil or currentTime == 0 then
-        return
-    end
+    currentTime += 1/60
 
     local roots = {}
     local cframes = {}
 
-    
-    local renderAt = currentTime - Interpolation.bufferDelay - Interpolation.packetFrequency
+    local renderAt = currentTime - Interpolation.bufferDelay - (Interpolation.packetFrequency)
+
+    print(renderAt - lastrenderAt)
+    lastrenderAt = renderAt
 
     for key, buffer in pairs(remoteClientBuffers) do
         local snapshotA, snapshotB = SnapshotBuffer.findClosestSnapshot(buffer, renderAt)
 
         if snapshotA and snapshotB then
-
-           -- print(snapshotA.timestamp)
             local newCFrame = Interpolation.getCFrame(snapshotA, snapshotB, renderAt)
 
             table.insert(roots, remoteClientRoots[key])
@@ -118,7 +112,6 @@ Zap.BroadcastReplication.SetCallback(function(data)
     Tick.raw = data.tick
 
     local timestamp = Tick.toTimestamp(data.tick)
-    print(timestamp)
 
     currentTime = timestamp
 
