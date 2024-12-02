@@ -32,6 +32,19 @@ event BroadcastReplication = {
 	}
 }
 
+event RequestServerTick = {
+	from: Client,
+	type: Reliable,
+	call: SingleAsync,
+}
+
+event ReturnServerTick = {
+	from: Server,
+	type: Reliable,
+	call: SingleAsync,
+	data: u8
+}
+
 event RequestEntities = {
 	from: Client,
 	type: Reliable,

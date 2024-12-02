@@ -23,6 +23,7 @@ function SnapshotBuffer.getSnapshots(self: Buffer): {Snapshot}
     return self.snapshots
 end
 
+-- If the received snapshot timestamp is the same then overwrite it dont duplicate!!!!!!!!
 function SnapshotBuffer.addSnapshot(self: Buffer, snapshot: Snapshot)
     if #self.snapshots + 1 > self.bufferSize then
         table.remove(self.snapshots, 1)

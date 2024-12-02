@@ -112,6 +112,12 @@ if not RunService:IsRunning() then
 		BroadcastReplication = table.freeze({
 			SetCallback = noop
 		}),
+		RequestServerTick = table.freeze({
+			Fire = noop
+		}),
+		ReturnServerTick = table.freeze({
+			SetCallback = noop
+		}),
 		RequestEntities = table.freeze({
 			Fire = noop
 		}),
@@ -150,11 +156,12 @@ end
 
 RunService.Heartbeat:Connect(SendEvents)
 
-local events = table.create(5)
-local event_queue: { [number]: { any } } = table.create(5)
+local events = table.create(7)
+local event_queue: { [number]: { any } } = table.create(7)
 event_queue[2] = {}
 event_queue[4] = {}
-event_queue[5] = {}
+event_queue[6] = {}
+event_queue[7] = {}
 reliable.OnClientEvent:Connect(function(buff, inst)
 	incoming_buff = buff
 	incoming_inst = inst
@@ -164,6 +171,17 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 	while incoming_read < len do
 		local id = buffer.readu8(buff, read(1))
 		if id == 4 then
+			local value
+			value = buffer.readu8(incoming_buff, read(1))
+			if events[4] then
+				task.spawn(events[4], value)
+			else
+				table.insert(event_queue[4], value)
+				if #event_queue[4] > 64 then
+					warn(`[ZAP] {#event_queue[4]} events in queue for ReturnServerTick. Did you forget to attach a listener?`)
+				end
+			end
+		elseif id == 6 then
 			local value
 			value = {}
 			local len_1 = buffer.readu16(incoming_buff, read(2))
@@ -179,15 +197,15 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 				assert(val_1.player:IsA("Player"))
 				value[i_1] = val_1
 			end
-			if events[4] then
-				task.spawn(events[4], value)
+			if events[6] then
+				task.spawn(events[6], value)
 			else
-				table.insert(event_queue[4], value)
-				if #event_queue[4] > 64 then
-					warn(`[ZAP] {#event_queue[4]} events in queue for ReturnEntities. Did you forget to attach a listener?`)
+				table.insert(event_queue[6], value)
+				if #event_queue[6] > 64 then
+					warn(`[ZAP] {#event_queue[6]} events in queue for ReturnEntities. Did you forget to attach a listener?`)
 				end
 			end
-		elseif id == 5 then
+		elseif id == 7 then
 			local value
 			value = {}
 			value.entity = buffer.readu8(incoming_buff, read(1))
@@ -196,12 +214,12 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			assert(value.player ~= nil)
 			assert(value.player:IsA("Player"))
 			value.add = buffer.readu8(incoming_buff, read(1)) == 1
-			if events[5] then
-				task.spawn(events[5], value)
+			if events[7] then
+				task.spawn(events[7], value)
 			else
-				table.insert(event_queue[5], value)
-				if #event_queue[5] > 64 then
-					warn(`[ZAP] {#event_queue[5]} events in queue for UpdateEntity. Did you forget to attach a listener?`)
+				table.insert(event_queue[7], value)
+				if #event_queue[7] > 64 then
+					warn(`[ZAP] {#event_queue[7]} events in queue for UpdateEntity. Did you forget to attach a listener?`)
 				end
 			end
 		else
@@ -272,10 +290,16 @@ local returns = {
 			load(saved)
 		end,
 	},
-	RequestEntities = {
+	RequestServerTick = {
 		Fire = function()
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 3)
+		end,
+	},
+	RequestEntities = {
+		Fire = function()
+			alloc(1)
+			buffer.writeu8(outgoing_buff, outgoing_apos, 5)
 		end,
 	},
 	BroadcastReplication = {
@@ -299,11 +323,8 @@ local returns = {
 			end
 		end,
 	},
-	ReturnEntities = {
-		SetCallback = function(Callback: (({ ({
-			entity: (number),
-			player: (Player),
-		}) })) -> ()): () -> ()
+	ReturnServerTick = {
+		SetCallback = function(Callback: ((number)) -> ()): () -> ()
 			events[4] = Callback
 			for _, value in event_queue[4] do
 				task.spawn(Callback, value)
@@ -314,19 +335,34 @@ local returns = {
 			end
 		end,
 	},
+	ReturnEntities = {
+		SetCallback = function(Callback: (({ ({
+			entity: (number),
+			player: (Player),
+		}) })) -> ()): () -> ()
+			events[6] = Callback
+			for _, value in event_queue[6] do
+				task.spawn(Callback, value)
+			end
+			event_queue[6] = {}
+			return function()
+				events[6] = nil
+			end
+		end,
+	},
 	UpdateEntity = {
 		SetCallback = function(Callback: (({
 			entity: (number),
 			player: (Player),
 			add: (boolean),
 		})) -> ()): () -> ()
-			events[5] = Callback
-			for _, value in event_queue[5] do
+			events[7] = Callback
+			for _, value in event_queue[7] do
 				task.spawn(Callback, value)
 			end
-			event_queue[5] = {}
+			event_queue[7] = {}
 			return function()
-				events[5] = nil
+				events[7] = nil
 			end
 		end,
 	},

@@ -14,11 +14,8 @@ local root = character:WaitForChild("HumanoidRootPart")
 
 root.Anchored = false
 
--- Local client buffer
-local localClientBuffer = SnapshotBuffer.new(Interpolation.replicationRate)
-
 local lastTick = os.clock()
-local lastServerTick = 0
+local currentTime = 0
 
 local queuedTransform = {
     x = root.CFrame.X,
@@ -27,20 +24,29 @@ local queuedTransform = {
     yRotation = math.rad(root.Orientation.Y)
 } 
 
+-- Local client buffer
+local localClientBuffer = SnapshotBuffer.new(Interpolation.replicationRate)
+
 -- Other clients buffers
 local remoteClientBuffers = {} :: {SnapshotBuffer.Buffer}
 
 -- Get entity updates
 local remoteClientRoots = {} :: {Instance?}
 
-Zap.RequestEntities.Fire()
+-- Get server tick
+Zap.RequestServerTick.Fire()
+Zap.ReturnServerTick.SetCallback(function(tick)
+    currentTime = Tick.toTimestamp(tick)
+end)
 
+-- Get list of entities
+Zap.RequestEntities.Fire()
 Zap.ReturnEntities.SetCallback(function(data)
     -- Updating entities
     for i, entry in data do
         local remoteRoot = entry.player.Character and entry.player.Character:FindFirstChild("HumanoidRootPart")
         remoteClientRoots[entry.entity] = remoteRoot
-        remoteClientBuffers[entry.entity] = SnapshotBuffer.new(Interpolation.replicationRate / 2)
+        remoteClientBuffers[entry.entity] = SnapshotBuffer.new(Interpolation.replicationRate * 5)
     end
 end)
 
@@ -48,7 +54,7 @@ Zap.UpdateEntity.SetCallback(function(data)
     if data.add then
         local remoteRoot = data.player.Character and data.player.Character:FindFirstChild("HumanoidRootPart")
         remoteClientRoots[data.entity] = remoteRoot
-        remoteClientBuffers[data.entity] = SnapshotBuffer.new(Interpolation.replicationRate / 2) 
+        remoteClientBuffers[data.entity] = SnapshotBuffer.new(Interpolation.replicationRate * 5) 
     else
         remoteClientRoots[data.entity] = nil
         remoteClientBuffers[data.entity] = nil
@@ -73,21 +79,24 @@ end)
 
 -- Interpolate other characters
 RunService.RenderStepped:Connect(function(deltaTime: number)
-    if next(remoteClientBuffers) == nil then
+    currentTime += deltaTime
+
+    if next(remoteClientBuffers) == nil or currentTime == 0 then
         return
     end
 
     local roots = {}
     local cframes = {}
 
-    local currentTimestamp =  Tick.toTimestamp(Tick.raw)
-
-    local renderAt = currentTimestamp - Interpolation.bufferDelay
+    
+    local renderAt = currentTime - Interpolation.bufferDelay - Interpolation.packetFrequency
 
     for key, buffer in pairs(remoteClientBuffers) do
         local snapshotA, snapshotB = SnapshotBuffer.findClosestSnapshot(buffer, renderAt)
 
         if snapshotA and snapshotB then
+
+           -- print(snapshotA.timestamp)
             local newCFrame = Interpolation.getCFrame(snapshotA, snapshotB, renderAt)
 
             table.insert(roots, remoteClientRoots[key])
@@ -108,9 +117,10 @@ Zap.BroadcastReplication.SetCallback(function(data)
 
     Tick.raw = data.tick
 
-    lastServerTick = os.clock()
-
     local timestamp = Tick.toTimestamp(data.tick)
+    print(timestamp)
+
+    currentTime = timestamp
 
     SnapshotBuffer.addSnapshot(localClientBuffer, {
         timestamp = timestamp,

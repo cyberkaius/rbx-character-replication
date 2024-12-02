@@ -3,7 +3,7 @@ local SnapshotBuffer = require(script.Parent.SnapshotBuffer)
 local Interpolation = {}
 
 Interpolation.bufferDelay = .1
-Interpolation.replicationRate = 40 -- hz
+Interpolation.replicationRate = 10 -- hz
 Interpolation.packetFrequency = 1 / Interpolation.replicationRate
 
 local twoPi = math.pi * 2
@@ -27,6 +27,13 @@ function Interpolation.getCFrame(snapshotA: SnapshotBuffer.Snapshot, snapshotB: 
     local alpha = (renderAt - snapshotA.timestamp) / (snapshotB.timestamp - snapshotA.timestamp)
 
     alpha = math.clamp(alpha, 0, 1)
+
+    --print(snapshotB.timestamp - snapshotA.timestamp)
+    --print("SnapshotA Timestamp:" .. snapshotA.timestamp)
+    --print("RenderAt Timestamp:" .. renderAt)
+    --print("SnapshotB Timestamp:" .. snapshotB.timestamp)
+    -- print("Alpha:" .. alpha)
+    --print("-------------")
 
     local positionA = Vector3.new(snapshotA.transform.x, snapshotA.transform.y, snapshotA.transform.z)
     local positionB = Vector3.new(snapshotA.transform.x, snapshotA.transform.y, snapshotA.transform.z)
