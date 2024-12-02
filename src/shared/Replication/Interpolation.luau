@@ -2,8 +2,8 @@ local SnapshotBuffer = require(script.Parent.SnapshotBuffer)
 
 local Interpolation = {}
 
-Interpolation.bufferDelay = .5
-Interpolation.replicationRate = 10 -- hz
+Interpolation.bufferDelay = .1
+Interpolation.replicationRate = 40 -- hz
 Interpolation.packetFrequency = 1 / Interpolation.replicationRate
 
 local twoPi = math.pi * 2
