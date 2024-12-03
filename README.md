@@ -5,6 +5,7 @@
 - Manually replicate animations
 - Fix interpolation not working
 - Allow physics objects, and NPC to replicate
+- Switch from f32 to something smaller
 
 ## Zap Config
 Run `zap src/config.zap` to generate files
