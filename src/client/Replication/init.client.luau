@@ -42,7 +42,7 @@ if providedEntities then
     for i, entry in providedEntities do
         local remoteRoot = entry.player.Character and entry.player.Character:FindFirstChild("HumanoidRootPart")
         remoteClientRoots[entry.entity] = remoteRoot
-        remoteClientBuffers[entry.entity] = SnapshotBuffer.new(Interpolation.replicationRate * 5)
+        remoteClientBuffers[entry.entity] = SnapshotBuffer.new(Interpolation.replicationRate / 2)
     end    
 end
 
@@ -50,7 +50,7 @@ Zap.UpdateEntity.SetCallback(function(data)
     if data.add then
         local remoteRoot = data.player.Character and data.player.Character:FindFirstChild("HumanoidRootPart")
         remoteClientRoots[data.entity] = remoteRoot
-        remoteClientBuffers[data.entity] = SnapshotBuffer.new(Interpolation.replicationRate * 5) 
+        remoteClientBuffers[data.entity] = SnapshotBuffer.new(Interpolation.replicationRate / 2) 
     else
         remoteClientRoots[data.entity] = nil
         remoteClientBuffers[data.entity] = nil
@@ -73,19 +73,14 @@ RunService.PostSimulation:Connect(function()
     end
 end)
 
-local lastrenderAt = 0
-
 -- Interpolate other characters
 RunService.RenderStepped:Connect(function(deltaTime: number)
-    currentTime += 1/60
+    currentTime += deltaTime
 
     local roots = {}
     local cframes = {}
 
     local renderAt = currentTime - Interpolation.bufferDelay - (Interpolation.packetFrequency)
-
-    print(renderAt - lastrenderAt)
-    lastrenderAt = renderAt
 
     for key, buffer in pairs(remoteClientBuffers) do
         local snapshotA, snapshotB = SnapshotBuffer.findClosestSnapshot(buffer, renderAt)
