@@ -1,6 +1,7 @@
 # Custom Roblox Character Replication
 
 ## TODO:
+- Use blink to lower recv and sent
 - Disable default replication using a Camera and represent players on the server as a Root.
 - Manually replicate animations
 - Fix interpolation not working
