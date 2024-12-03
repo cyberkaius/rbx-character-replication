@@ -1,9 +1,10 @@
 # Custom Roblox Character Replication
 
 ## TODO:
-- Place humanoid root parts under the Camera to disable their replication and let the clients control the root's positions
+- Disable default replication using a Camera and represent players on the server as a Root.
 - Manually replicate animations
 - Fix interpolation not working
+- Allow physics objects, and NPC to replicate
 
 ## Zap Config
 Run `zap src/config.zap` to generate files
