@@ -23,6 +23,9 @@ RunService.Heartbeat:Connect(function()
 			z: number,
 		}
 
+		local cframes: {CFrame} = {}
+		local roots: {Instance} = {}
+
 		for key, snapshot in pairs(playerSnapshots) do
 			local lastSnapshot = SnapshotBuffer.getLatestSnapshot(snapshot)
 
@@ -34,7 +37,19 @@ RunService.Heartbeat:Connect(function()
 					z = lastSnapshot.transform.z,
 					yRotation = lastSnapshot.transform.yRotation
 				}
+
+				local entity = Entities.getInstance(key) :: Player
+				local root = entity.Character and entity.Character:FindFirstChild("HumanoidRootPart")
+
+				if root then
+					table.insert(cframes, CFrame.new(lastSnapshot.transform.x, lastSnapshot.transform.y, lastSnapshot.transform.z) * CFrame.Angles(0, lastSnapshot.transform.yRotation, 0))
+					table.insert(roots, root)	
+				end
 			end	
+		end
+
+		if (#cframes == #roots) and (#cframes > 0) and (#roots > 0) then
+			Workspace:BulkMoveTo(roots, cframes)
 		end
 
 		for key, v in Entities.getList() do

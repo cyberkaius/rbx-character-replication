@@ -2,7 +2,8 @@
 
 ## TODO:
 - Use blink to lower recv and sent
-- Disable default replication using a Camera and represent players on the server as a Root.
+- Convert transform to CFrame to better performance (over CFrame * CFrame.angles)
+- Add jump to movement controller
 - Manually replicate animations
 - Fix interpolation not working
 - Allow physics objects, and NPC to replicate

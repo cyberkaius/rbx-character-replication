@@ -5,7 +5,7 @@ export type Transform = {
     yRotation: number,
 }
 
--- TODO: make function to parse transform into CFrame
+-- TODO: make function to parse transform into CFrame (!!!!!)
 -- TODO: add y-rotation
 
 return {}

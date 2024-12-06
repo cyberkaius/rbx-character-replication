@@ -48,6 +48,8 @@ end
 function Player.loadCharacter(player: MyPlayer)
     return Future.new(function(player: MyPlayer)
         if not player.character or player.root then
+            print(player.instance)
+            print(player.instance.UserId)
             local humanoidDescription = game.Players:GetHumanoidDescriptionFromUserId(player.instance.UserId)
         
             local character = Players:CreateHumanoidModelFromDescription(humanoidDescription, Enum.HumanoidRigType.R15)
