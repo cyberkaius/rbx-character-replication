@@ -23,52 +23,41 @@ local remoteClientRoots = {} :: {Instance?}
 local currentTime = Tick.toTimestamp(Zap.RequestServerTick.Call())
 
 -- Get local root
-local localRoot: BasePart? = nil
 local lastTick = os.clock()
-local queuedTransform: Transform.Transform? = nil
+local localPlayer = require(script.Parent.Player):Await()
+
+local queuedTransform: Transform.Transform = {
+    x = localPlayer.Root.CFrame.X,
+    y = localPlayer.Root.CFrame.Y,
+    z = localPlayer.Root.CFrame.Z,
+    yRotation = math.rad(localPlayer.Root.Orientation.Y)
+} 
 
 -- Update buffers and roots whenever an entity is added
 Entities.connect(function(entity, added)
-    local root = Entities.getInstance(entity) :: BasePart?
+    if added then
+        local root = Entities.getInstance(entity) :: BasePart?
 
-    if root then
-        local player = Players:GetPlayerFromCharacter(root.Parent)
-
-        if player == Players.LocalPlayer then
-            localRoot = root
-
-            queuedTransform = {
-                x = root.CFrame.X,
-                y = root.CFrame.Y,
-                z = root.CFrame.Z,
-                yRotation = math.rad(root.Orientation.Y)
-            } 
-
-            return
-        end
-
-        if added then
+        if root then
             remoteClientRoots[entity] = root
-            remoteClientBuffers[entity] = SnapshotBuffer.new(Interpolation.replicationRate / 2)    
-        elseif not added then
-            remoteClientRoots[entity] = nil
-            remoteClientBuffers[entity] = nil
-        end    
-    end
+            remoteClientBuffers[entity] = SnapshotBuffer.new(Interpolation.replicationRate / 2)        
+        end
+    elseif not added then
+        remoteClientRoots[entity] = nil
+        remoteClientBuffers[entity] = nil
+    end    
 end)
 
 -- Replicate local position to server
 RunService.PostSimulation:Connect(function()
-    if localRoot == nil or queuedTransform == nil then return end
-
     if os.clock() - lastTick >= Interpolation.packetFrequency then
         lastTick = os.clock()
 
         queuedTransform = {
-            x = localRoot.CFrame.X,
-            y = localRoot.CFrame.Y,
-            z = localRoot.CFrame.Z,
-            yRotation = math.rad(localRoot.Orientation.Y)
+            x = localPlayer.Root.CFrame.X,
+            y = localPlayer.Root.CFrame.Y,
+            z = localPlayer.Root.CFrame.Z,
+            yRotation = math.rad(localPlayer.Root.Orientation.Y)
         }
 
         Zap.RequestReplication.Fire(queuedTransform)
