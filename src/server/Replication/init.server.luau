@@ -74,59 +74,11 @@ Zap.RequestServerTick.SetCallback(function(player)
 	return Tick.raw
 end)
 
--- TODO: Create humanoid roots for each player in Camera to stop replication
--- Create snapshot of roots when character added / removed
-Zap.RequestEntities.SetCallback(function(player: Player)
-	local entityMap = {}
-
-	for key, plr in Entities.getList() do
-		if plr == player then
-			continue
-		end
-
-		table.insert(entityMap, {
-			entity = key,
-			player = plr :: Player 
-		})
+-- Add snapshots for each entity
+Entities.connect(function(key, added)
+	if added then
+		playerSnapshots[key] = SnapshotBuffer.new(Interpolation.replicationRate / 2)
+	else
+		playerSnapshots[key] = nil
 	end
-	
-	if #entityMap > 0 then
-		return entityMap
-	end	
-
-	return nil
-end)
-
-Players.PlayerAdded:Connect(function(player: Player)
-    player.CharacterAdded:Connect(function(character: Model)
-		local key = Entities.add(player)
-
-		Zap.UpdateEntity.FireExcept(player, {
-			entity = key,
-			player = player,
-			add = true
-		})
-
-        playerSnapshots[key] = SnapshotBuffer.new(Interpolation.replicationRate / 2)
-
-		-- Disable default replication by anchoring
-		task.wait()
-        local root = character:WaitForChild("HumanoidRootPart") :: BasePart
-		root.Anchored = true
-    end)
-
-    player.CharacterRemoving:Connect(function(character: Model)
-		local key = Entities.getKey(player)
-
-		if key then
-			playerSnapshots[key] = nil
-			Entities.remove(key)	
-
-			Zap.UpdateEntity.FireExcept(player, {
-				entity = key,
-				player = player,
-				add = false
-			})
-		end	
-    end)
 end)

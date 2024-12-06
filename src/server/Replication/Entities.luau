@@ -1,21 +1,54 @@
+type Connection = (key: number, added: boolean) -> nil
+
 local Entities = {}
 
-local list = {} :: {Instance?}
+local list: {Instance?} = {}
 
-function Entities.add(root: Instance): number
+local listeners: {Connection} = {}
+local nextSignalId = 1
+
+function Entities.connect(callback: Connection)
+    listeners[nextSignalId] = callback
+    nextSignalId += 1
+
+    return nextSignalId
+end
+
+function Entities.disconnect(signal: number)
+    table.remove(listeners, signal)
+end
+
+function Entities.add(instance: Instance): number
     for i = 1, #list do 
         if list[i] == nil then
-            list[i] = root
+            list[i] = instance
 
             return i
         end
     end
 
-    table.insert(list, root)
+    table.insert(list, instance)
+
+    -- Call any listeners and tell them an entity was added
+    for i, v in listeners do
+        v(#list, true)
+    end
 
     -- TODO: block entity list from going past a u8 value (highly unlike to happen anyway)
-
     return #list
+end
+
+function Entities.remove(key: number)
+    if key >= 1 and key <= #list then
+        if list[key] then
+            list[key] = nil
+
+            -- Call any listeners and tell them an entity was removed
+            for i, v in listeners do
+                v(key, false)
+            end
+        end
+    end
 end
 
 function Entities.getList()
@@ -40,14 +73,6 @@ function Entities.getKey(instance: Instance): number?
     end
 
     return
-end
-
-function Entities.remove(key: number)
-    if key >= 1 and key <= #list then
-        if list[key] then
-            list[key] = nil
-        end
-    end
 end
 
 return Entities
