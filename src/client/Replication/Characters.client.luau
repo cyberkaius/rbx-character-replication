@@ -13,7 +13,9 @@ local function addEntity(data: {entity: number, player: Player})
     Player.loadCharacter(player):Await()
 
     if player.root then
-        Entities.addManually(data.entity, player.root)
+        if Entities.getInstance(data.entity) == nil then
+            Entities.addManually(data.entity, player.root)
+        end
     end
 
     if player.humanoid then

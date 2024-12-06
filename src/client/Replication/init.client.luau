@@ -23,8 +23,12 @@ local remoteClientRoots = {} :: {Instance?}
 -- Get server tick
 local currentTime = Tick.toTimestamp(Zap.RequestServerTick.Call())
 
+print("tryna find local")
+
 -- Get local root
 local localPlayer = Player.getLocalPlayer(true) :: Player.MyPlayer
+
+print("Found local")
 
 local lastTick = os.clock()
 

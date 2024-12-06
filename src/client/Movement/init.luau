@@ -8,11 +8,7 @@ local Keyboard = require(script.Keyboard)
 
 local thumbstick = Thumbstick.new()
 
-print(Player.getLocalPlayer(false))
-
 local localPlayer = Player.getLocalPlayer(true) :: Player.MyPlayer
-
-print(localPlayer)
 
 local Movement = {}
 Movement.canMove = false
