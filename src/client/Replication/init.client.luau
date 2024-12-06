@@ -9,6 +9,7 @@ local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation
 local SnapshotBuffer = require(ReplicatedStorage.Shared.Replication.SnapshotBuffer)
 local Tick = require(ReplicatedStorage.Shared.Replication.Tick)
 local Transform = require(ReplicatedStorage.Shared.Replication.Transform)
+local Player = require(script.Parent.Player)
 
 -- Local client buffer
 local localClientBuffer = SnapshotBuffer.new(Interpolation.replicationRate)
@@ -23,14 +24,15 @@ local remoteClientRoots = {} :: {Instance?}
 local currentTime = Tick.toTimestamp(Zap.RequestServerTick.Call())
 
 -- Get local root
+local localPlayer = Player.getLocalPlayer(true) :: Player.MyPlayer
+
 local lastTick = os.clock()
-local localPlayer = require(script.Parent.Player):Await()
 
 local queuedTransform: Transform.Transform = {
-    x = localPlayer.Root.CFrame.X,
-    y = localPlayer.Root.CFrame.Y,
-    z = localPlayer.Root.CFrame.Z,
-    yRotation = math.rad(localPlayer.Root.Orientation.Y)
+    x = localPlayer.root.CFrame.X,
+    y = localPlayer.root.CFrame.Y,
+    z = localPlayer.root.CFrame.Z,
+    yRotation = math.rad(localPlayer.root.Orientation.Y)
 } 
 
 -- Update buffers and roots whenever an entity is added
@@ -54,10 +56,10 @@ RunService.PostSimulation:Connect(function()
         lastTick = os.clock()
 
         queuedTransform = {
-            x = localPlayer.Root.CFrame.X,
-            y = localPlayer.Root.CFrame.Y,
-            z = localPlayer.Root.CFrame.Z,
-            yRotation = math.rad(localPlayer.Root.Orientation.Y)
+            x = localPlayer.root.CFrame.X,
+            y = localPlayer.root.CFrame.Y,
+            z = localPlayer.root.CFrame.Z,
+            yRotation = math.rad(localPlayer.root.Orientation.Y)
         }
 
         Zap.RequestReplication.Fire(queuedTransform)

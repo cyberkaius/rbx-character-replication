@@ -4,37 +4,34 @@ local Workspace = game:GetService("Workspace")
 
 local Zap = require(script.Parent.Parent.Zap)
 
+local Player = require(script.Parent.Parent.Player)
+
 local Entities = require(ReplicatedStorage.Shared.Replication.Entities)
 
-local function createCharacter(userId: number, entity: number)
-    local humanoidDescription = game.Players:GetHumanoidDescriptionFromUserId(userId)
-    local character = Players:CreateHumanoidModelFromDescription(humanoidDescription, Enum.HumanoidRigType.R15)
-    character.Parent = game.Workspace
+local function addEntity(data: {entity: number, player: Player})
+    local player = Player.getPlayer(data.player.UserId) :: Player.MyPlayer
+    Player.loadCharacter(player):Await()
 
-    local root = character:FindFirstChild("HumanoidRootPart")
-
-    if root then
-        Entities.addManually(entity, root)
+    if player.root then
+        Entities.addManually(data.entity, player.root)
     end
 
-    local humanoid = character:FindFirstChild("Humanoid")
-
-    if humanoid then
-        Workspace.CurrentCamera.CameraSubject = humanoid
+    if player.humanoid then
+        Workspace.CurrentCamera.CameraSubject = player.humanoid
     end
 end
 
 local existingEntities = Zap.RequestEntities.Call()
 
 if existingEntities then
-    for i, entry in existingEntities do
-        createCharacter(entry.player.UserId, entry.entity)
+    for i, data in existingEntities do
+        addEntity(data)
     end    
 end
 
 Zap.UpdateEntity.SetCallback(function(data)
     if data.added then
-        createCharacter(data.player.UserId, data.entity)
+        addEntity(data)
     else
         Entities.remove(data.entity)
     end

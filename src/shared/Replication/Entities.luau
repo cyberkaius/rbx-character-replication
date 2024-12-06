@@ -67,8 +67,6 @@ end
 function Entities.addManually(key: number, instance: Instance)
     list[key] = instance
 
-    print(key)
-
     for i, v in listeners do
         v(#list, true)
     end
