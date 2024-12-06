@@ -4,17 +4,12 @@ local Workspace = game:GetService("Workspace")
 
 local Zap = require(script.Parent.Parent.Zap)
 
-local SnapshotBuffer = require(ReplicatedStorage.Shared.Replication.SnapshotBuffer)
-local Entities = require(script.Parent.Entities)
+local Entities = require(ReplicatedStorage.Shared.Replication.Entities)
 
 Zap.RequestEntities.SetCallback(function(player: Player)
 	local entityMap = {}
 
 	for key, plr in Entities.getList() do
-		if plr == player then
-			continue
-		end
-
 		table.insert(entityMap, {
 			entity = key,
 			player = plr :: Player 
@@ -31,15 +26,15 @@ end)
 Players.PlayerAdded:Connect(function(player: Player)
     player.CharacterAdded:Connect(function(character: Model)
 		local key = Entities.add(player)
-
-		Zap.UpdateEntity.FireExcept(player, {
+        
+		Zap.UpdateEntity.FireAll({
 			entity = key,
 			player = player,
-			add = true
+			added = true
 		})
 
         task.wait()
-        
+
         -- Disable default replication
         character.Parent = Workspace.CurrentCamera
         local root = character:WaitForChild("HumanoidRootPart") :: BasePart
@@ -55,7 +50,7 @@ Players.PlayerAdded:Connect(function(player: Player)
 			Zap.UpdateEntity.FireExcept(player, {
 				entity = key,
 				player = player,
-				add = false
+				added = false
 			})
 		end	
     end)

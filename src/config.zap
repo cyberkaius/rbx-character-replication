@@ -52,6 +52,6 @@ event UpdateEntity = {
 	data: struct {
 		entity: u8,
 		player: Instance(Player),
-		add: boolean
+		added: boolean
 	}
 }

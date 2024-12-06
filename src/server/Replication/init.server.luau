@@ -6,7 +6,7 @@ local Workspace = game:GetService("Workspace")
 local Zap = require(script.Parent.Zap)
 local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
 local SnapshotBuffer = require(ReplicatedStorage.Shared.Replication.SnapshotBuffer)
-local Entities = require(script.Entities)
+local Entities = require(ReplicatedStorage.Shared.Replication.Entities)
 local Tick = require(ReplicatedStorage.Shared.Replication.Tick)
 
 local playerSnapshots = {} :: {SnapshotBuffer.Buffer}

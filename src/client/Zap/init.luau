@@ -173,7 +173,7 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 			value.player = incoming_inst[incoming_ipos]
 			assert(value.player ~= nil)
 			assert(value.player:IsA("Player"))
-			value.add = buffer.readu8(incoming_buff, read(1)) == 1
+			value.added = buffer.readu8(incoming_buff, read(1)) == 1
 			if events[3] then
 				task.spawn(events[3], value)
 			else
@@ -304,7 +304,7 @@ local returns = {
 		SetCallback = function(Callback: (({
 			entity: (number),
 			player: (Player),
-			add: (boolean),
+			added: (boolean),
 		})) -> ()): () -> ()
 			events[3] = Callback
 			for _, value in event_queue[3] do

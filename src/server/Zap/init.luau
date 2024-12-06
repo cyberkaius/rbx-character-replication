@@ -474,7 +474,7 @@ local returns = {
 		Fire = function(Player: Player, Value: ({
 			entity: (number),
 			player: (Player),
-			add: (boolean),
+			added: (boolean),
 		}))
 			load_player(Player)
 			alloc(1)
@@ -484,13 +484,13 @@ local returns = {
 			assert(Value.player:IsA("Player"))
 			table.insert(outgoing_inst, Value.player)
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.added and 1 or 0)
 			player_map[Player] = save()
 		end,
 		FireAll = function(Value: ({
 			entity: (number),
 			player: (Player),
-			add: (boolean),
+			added: (boolean),
 		}))
 			load_empty()
 			alloc(1)
@@ -500,7 +500,7 @@ local returns = {
 			assert(Value.player:IsA("Player"))
 			table.insert(outgoing_inst, Value.player)
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.added and 1 or 0)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for _, player in Players:GetPlayers() do
 				load_player(player)
@@ -513,7 +513,7 @@ local returns = {
 		FireExcept = function(Except: Player, Value: ({
 			entity: (number),
 			player: (Player),
-			add: (boolean),
+			added: (boolean),
 		}))
 			load_empty()
 			alloc(1)
@@ -523,7 +523,7 @@ local returns = {
 			assert(Value.player:IsA("Player"))
 			table.insert(outgoing_inst, Value.player)
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.added and 1 or 0)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for _, player in Players:GetPlayers() do
 				if player ~= Except then
@@ -538,7 +538,7 @@ local returns = {
 		FireList = function(List: { Player }, Value: ({
 			entity: (number),
 			player: (Player),
-			add: (boolean),
+			added: (boolean),
 		}))
 			load_empty()
 			alloc(1)
@@ -548,7 +548,7 @@ local returns = {
 			assert(Value.player:IsA("Player"))
 			table.insert(outgoing_inst, Value.player)
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.added and 1 or 0)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for _, player in List do
 				load_player(player)
@@ -561,7 +561,7 @@ local returns = {
 		FireSet = function(Set: { [Player]: true }, Value: ({
 			entity: (number),
 			player: (Player),
-			add: (boolean),
+			added: (boolean),
 		}))
 			load_empty()
 			alloc(1)
@@ -571,7 +571,7 @@ local returns = {
 			assert(Value.player:IsA("Player"))
 			table.insert(outgoing_inst, Value.player)
 			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, Value.add and 1 or 0)
+			buffer.writeu8(outgoing_buff, outgoing_apos, Value.added and 1 or 0)
 			local buff, used, inst = outgoing_buff, outgoing_used, outgoing_inst
 			for player in Set do
 				load_player(player)
