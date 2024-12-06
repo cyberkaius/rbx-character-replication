@@ -18,7 +18,13 @@ function Player.getPlayers(): {MyPlayer}
 end
 
 function Player.getPlayer(userId: number): {MyPlayer}
-    return Player._players[userId]
+    local player = Player._players[userId]
+
+    if not player then
+        player = Player.new(Players.LocalPlayer)
+    end
+    
+    return player
 end
 
 function Player.new(instance: Player)
@@ -48,9 +54,11 @@ end
 function Player.loadCharacter(player: MyPlayer)
     return Future.new(function(player: MyPlayer)
         if not player.character or player.root then
-            print(player.instance)
-            print(player.instance.UserId)
-            local humanoidDescription = game.Players:GetHumanoidDescriptionFromUserId(player.instance.UserId)
+            local id = player.instance.UserId
+
+            if id <= 0 then id = 1 end
+
+            local humanoidDescription = Players:GetHumanoidDescriptionFromUserId(id)
         
             local character = Players:CreateHumanoidModelFromDescription(humanoidDescription, Enum.HumanoidRigType.R15)
             character.Parent = game.Workspace
