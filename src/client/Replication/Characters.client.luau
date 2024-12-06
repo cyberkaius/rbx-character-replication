@@ -35,6 +35,8 @@ Zap.UpdateEntity.SetCallback(function(data)
     if data.added then
         addEntity(data)
     else
+        local player = Player.getPlayer(data.player.UserId)
+        
         Entities.remove(data.entity)
     end
 end)

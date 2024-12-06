@@ -3,9 +3,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Future = require(ReplicatedStorage.Packages.Future)
 
+local Character = require(script.Character)
+
 export type MyPlayer = {
     instance: Player,
-    character: Model,
+    character: Character.Character,
     root: BasePart,
     humanoid: Humanoid,
 }
@@ -44,7 +46,7 @@ function Player.getLocalPlayer(withCharacter: boolean?): {MyPlayer}
         player = Player.new(Players.LocalPlayer)
     end
 
-    if withCharacter == true then
+    if player and withCharacter == true then
         repeat task.wait() until player.character and player.root and player.humanoid
     end
 
@@ -52,27 +54,21 @@ function Player.getLocalPlayer(withCharacter: boolean?): {MyPlayer}
 end
 
 function Player.loadCharacter(player: MyPlayer)
-    return Future.new(function(player: MyPlayer)
-        if not player.character or player.root then
-            local id = player.instance.UserId
+    local character = Character.new(player.instance)
 
-            if id <= 0 then id = 1 end
+    if character then
+        player.character = character
 
-            local humanoidDescription = Players:GetHumanoidDescriptionFromUserId(id)
-        
-            local character = Players:CreateHumanoidModelFromDescription(humanoidDescription, Enum.HumanoidRigType.R15)
-            character.Parent = game.Workspace
-        
-            local root = character:WaitForChild("HumanoidRootPart")
-            local humanoid = character:WaitForChild("Humanoid")
-        
-            player.character = character
-            player.root = root   
-            player.humanoid = humanoid 
-        end
-        
-        return player.character
-    end, player)
+        repeat task.wait() until player.character.root and player.character.humanoid    
+    else
+        return
+    end
+end
+
+function Player.removeCharacter(player: MyPlayer)
+    if player.character then
+        Character.destroy(player.character)
+    end
 end
 
 return Player

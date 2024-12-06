@@ -45,6 +45,12 @@ funct RequestEntities = {
 	}[1 .. 50]?
 }
 
+funct RequestEntityId = {
+    call: Async,
+	args: (player: Instance(Player)),
+    rets: (u8?)
+}
+
 event UpdateEntity = {
 	from: Server,
 	type: Reliable,
