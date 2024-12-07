@@ -2,6 +2,7 @@
 
 ## TODO:
 - Use blink to lower recv and sent
+- Maybe convert the project to Jecs
 - Convert transform to CFrame to better performance (over CFrame * CFrame.angles)
 - Add jump to movement controller
 - Manually replicate animations
