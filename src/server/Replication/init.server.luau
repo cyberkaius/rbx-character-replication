@@ -6,7 +6,7 @@ local Workspace = game:GetService("Workspace")
 local Zap = require(script.Parent.Zap)
 local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
 local SnapshotBuffer = require(ReplicatedStorage.Shared.Replication.SnapshotBuffer)
-local Entities = require(ReplicatedStorage.Shared.Replication.Entities)
+local Entities = require(script.Entities)
 local Tick = require(ReplicatedStorage.Shared.Replication.Tick)
 
 local playerSnapshots = {} :: {SnapshotBuffer.Buffer}
@@ -30,13 +30,13 @@ RunService.Heartbeat:Connect(function()
 			local lastSnapshot = SnapshotBuffer.getLatestSnapshot(snapshot)
 
 			if lastSnapshot then
-				map[key] = {
+				table.insert(map, {
 					entity = key,
 					x = lastSnapshot.transform.x,
 					y = lastSnapshot.transform.y,
 					z = lastSnapshot.transform.z,
 					yRotation = lastSnapshot.transform.yRotation
-				}
+				})
 
 				local entity = Entities.getInstance(key) :: Player
 				local root = entity.Character and entity.Character:FindFirstChild("HumanoidRootPart")
@@ -51,21 +51,12 @@ RunService.Heartbeat:Connect(function()
 		if (#cframes == #roots) and (#cframes > 0) and (#roots > 0) then
 			Workspace:BulkMoveTo(roots, cframes)
 		end
-
-		for key, v in Entities.getList() do
-			local player = Entities.getInstance(key) :: Player
-
-			if player then
-				local newMap = table.clone(map)
-				table.remove(newMap, key)
-
-				if #newMap > 0 then
-					Zap.BroadcastReplication.Fire(player, {
-						tick = Tick.raw,
-						map = newMap
-					})	
-				end
-			end
+		
+		if #map > 0 then
+			Zap.BroadcastReplication.FireAll({
+				tick = Tick.raw,
+				map = map
+			})		
 		end
 
 		Tick.increment()

@@ -1,20 +1,27 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Future = require(ReplicatedStorage.Packages.Future)
-
-local Zap = require(script.Parent.Parent.Zap)
+local SnapshotBuffer = require(ReplicatedStorage.Shared.Replication.SnapshotBuffer)
+local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
 
 export type Character = {
     model: Model,
     root: BasePart,
     humanoid: Humanoid,
-    entityId: number
+    entityId: number,
+    canMove: boolean,
+    moveVector: Vector3,
+    snapshotBuffer: SnapshotBuffer.Buffer
 }
 
 local Character = {}
+Character._characters = {} :: {Character}
 
-function Character.new(player: Player): Character?
+function Character.getList(): {Character}
+    return Character._characters
+end
+
+function Character.new(player: Player, entityId: number, cframe: CFrame): Character
     local character = {} :: Character
 
     local userId = player.UserId
@@ -22,22 +29,21 @@ function Character.new(player: Player): Character?
 
     local humanoidDescription = Players:GetHumanoidDescriptionFromUserId(userId)
 
-    local character = Players:CreateHumanoidModelFromDescription(humanoidDescription, Enum.HumanoidRigType.R15)
-    character.Parent = game.Workspace
+    local model = Players:CreateHumanoidModelFromDescription(humanoidDescription, Enum.HumanoidRigType.R15)
+    model.Parent = game.Workspace
 
-    local root = character:WaitForChild("HumanoidRootPart")
-    local humanoid = character:WaitForChild("Humanoid")
+    character.model = model
+    character.root = model:WaitForChild("HumanoidRootPart")   
+    character.humanoid = model:WaitForChild("Humanoid") 
+    character.entityId = entityId
+    character.snapshotBuffer = SnapshotBuffer.new(Interpolation.replicationRate / 2)
+    character.canMove = true
+    character.moveVector = Vector3.zero
+    character.root.CFrame = cframe
 
-    character.model = character
-    character.root = root   
-    character.humanoid = humanoid 
-    character.entityId = Zap.RequestEntityId.Call(player)
+    Character._characters[entityId] = character
 
-    if character.entityId then
-        return character
-    end
-
-    return
+    return character
 end
 
 function Character.destroy(character: Character)

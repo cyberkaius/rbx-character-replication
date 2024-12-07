@@ -37,27 +37,22 @@ funct RequestServerTick = {
     rets: u8
 }
 
-funct RequestEntities = {
-    call: Async,
-    rets: struct {
-		entity: u8,
-		player: Instance(Player),
-	}[1 .. 50]?
-}
-
-funct RequestEntityId = {
-    call: Async,
-	args: (player: Instance(Player)),
-    rets: (u8?)
-}
-
-event UpdateEntity = {
+event CreateCharacter = {
 	from: Server,
 	type: Reliable,
 	call: SingleAsync,
 	data: struct {
-		entity: u8,
+		entityId: u8,
 		player: Instance(Player),
-		added: boolean
+		cframe: CFrame,
+	}
+}
+
+event RemoveCharacter = {
+	from: Server,
+	type: Reliable,
+	call: SingleAsync,
+	data: struct {
+		entityId: u8,
 	}
 }

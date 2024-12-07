@@ -1,8 +1,4 @@
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Future = require(ReplicatedStorage.Packages.Future)
-
 local Character = require(script.Character)
 
 export type MyPlayer = {
@@ -19,14 +15,10 @@ function Player.getPlayers(): {MyPlayer}
     return Player._players
 end
 
-function Player.getPlayer(userId: number): {MyPlayer}
-    local player = Player._players[userId]
+function Player.getPlayer(userId: number, waitUntil: boolean?): MyPlayer
+    repeat task.wait() until Player._players[userId] ~= nil
 
-    if not player then
-        player = Player.new(Players.LocalPlayer)
-    end
-    
-    return player
+    return Player._players[userId]
 end
 
 function Player.new(instance: Player)
@@ -39,36 +31,16 @@ function Player.new(instance: Player)
     return player
 end
 
-function Player.getLocalPlayer(withCharacter: boolean?): {MyPlayer}
+function Player.getLocalPlayer(withCharacter: boolean?): MyPlayer
     local player = Player._players[Players.LocalPlayer.UserId]
 
-    if not player then
-        player = Player.new(Players.LocalPlayer)
-    end
+    repeat task.wait() until player ~= nil
 
     if player and withCharacter == true then
-        repeat task.wait() until player.character and player.root and player.humanoid
+        repeat task.wait() until player.character ~= nil
     end
 
     return player
-end
-
-function Player.loadCharacter(player: MyPlayer)
-    local character = Character.new(player.instance)
-
-    if character then
-        player.character = character
-
-        repeat task.wait() until player.character.root and player.character.humanoid    
-    else
-        return
-    end
-end
-
-function Player.removeCharacter(player: MyPlayer)
-    if player.character then
-        Character.destroy(player.character)
-    end
 end
 
 return Player

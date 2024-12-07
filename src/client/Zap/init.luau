@@ -112,16 +112,13 @@ if not RunService:IsRunning() then
 		BroadcastReplication = table.freeze({
 			SetCallback = noop
 		}),
-		UpdateEntity = table.freeze({
+		CreateCharacter = table.freeze({
+			SetCallback = noop
+		}),
+		RemoveCharacter = table.freeze({
 			SetCallback = noop
 		}),
 		RequestServerTick = table.freeze({
-			Call = noop
-		}),
-		RequestEntities = table.freeze({
-			Call = noop
-		}),
-		RequestEntityId = table.freeze({
 			Call = noop
 		}),
 	}) :: Events
@@ -153,14 +150,13 @@ end
 
 RunService.Heartbeat:Connect(SendEvents)
 
-local events = table.create(6)
-local event_queue: { [number]: { any } } = table.create(6)
+local events = table.create(5)
+local event_queue: { [number]: { any } } = table.create(5)
 local function_call_id = 0
 event_queue[2] = {}
 event_queue[3] = {}
-event_queue[4] = table.create(255)
+event_queue[4] = {}
 event_queue[5] = table.create(255)
-event_queue[6] = table.create(255)
 reliable.OnClientEvent:Connect(function(buff, inst)
 	incoming_buff = buff
 	incoming_inst = inst
@@ -172,59 +168,45 @@ reliable.OnClientEvent:Connect(function(buff, inst)
 		if id == 3 then
 			local value
 			value = {}
-			value.entity = buffer.readu8(incoming_buff, read(1))
+			value.entityId = buffer.readu8(incoming_buff, read(1))
 			incoming_ipos = incoming_ipos + 1
 			value.player = incoming_inst[incoming_ipos]
 			assert(value.player ~= nil)
 			assert(value.player:IsA("Player"))
-			value.added = buffer.readu8(incoming_buff, read(1)) == 1
+			local pos_1 = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
+			local axisangle_1 = Vector3.new(buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)), buffer.readf32(incoming_buff, read(4)))
+			local angle_1 = axisangle_1.Magnitude
+			if angle_1 ~= 0 then
+				value.cframe = CFrame.fromAxisAngle(axisangle_1, angle_1) + pos_1
+			else
+				value.cframe = CFrame.new(pos_1)
+			end
 			if events[3] then
 				task.spawn(events[3], value)
 			else
 				table.insert(event_queue[3], value)
 				if #event_queue[3] > 64 then
-					warn(`[ZAP] {#event_queue[3]} events in queue for UpdateEntity. Did you forget to attach a listener?`)
+					warn(`[ZAP] {#event_queue[3]} events in queue for CreateCharacter. Did you forget to attach a listener?`)
 				end
 			end
 		elseif id == 4 then
-			local call_id = buffer.readu8(incoming_buff, read(1))
 			local value
-			value = buffer.readu8(incoming_buff, read(1))
-			task.spawn(event_queue[4][call_id], value)
-			event_queue[4][call_id] = nil
+			value = {}
+			value.entityId = buffer.readu8(incoming_buff, read(1))
+			if events[4] then
+				task.spawn(events[4], value)
+			else
+				table.insert(event_queue[4], value)
+				if #event_queue[4] > 64 then
+					warn(`[ZAP] {#event_queue[4]} events in queue for RemoveCharacter. Did you forget to attach a listener?`)
+				end
+			end
 		elseif id == 5 then
 			local call_id = buffer.readu8(incoming_buff, read(1))
 			local value
-			if buffer.readu8(incoming_buff, read(1)) == 1 then
-				value = {}
-				local len_1 = buffer.readu16(incoming_buff, read(2))
-				assert(len_1 >= 1)
-				assert(len_1 <= 50)
-				for i_1 = 1, len_1 do
-					local val_1
-					val_1 = {}
-					val_1.entity = buffer.readu8(incoming_buff, read(1))
-					incoming_ipos = incoming_ipos + 1
-					val_1.player = incoming_inst[incoming_ipos]
-					assert(val_1.player ~= nil)
-					assert(val_1.player:IsA("Player"))
-					value[i_1] = val_1
-				end
-			else
-				value = nil
-			end
+			value = buffer.readu8(incoming_buff, read(1))
 			task.spawn(event_queue[5][call_id], value)
 			event_queue[5][call_id] = nil
-		elseif id == 6 then
-			local call_id = buffer.readu8(incoming_buff, read(1))
-			local value
-			if buffer.readu8(incoming_buff, read(1)) == 1 then
-				value = buffer.readu8(incoming_buff, read(1))
-			else
-				value = nil
-			end
-			task.spawn(event_queue[6][call_id], value)
-			event_queue[6][call_id] = nil
 		else
 			error("Unknown event id")
 		end
@@ -314,11 +296,11 @@ local returns = {
 			end
 		end,
 	},
-	UpdateEntity = {
+	CreateCharacter = {
 		SetCallback = function(Callback: (Value: ({
-			entity: (number),
+			entityId: (number),
 			player: (Player),
-			added: (boolean),
+			cframe: (CFrame),
 		})) -> ()): () -> ()
 			events[3] = Callback
 			for _, value in event_queue[3] do
@@ -330,27 +312,22 @@ local returns = {
 			end
 		end,
 	},
-	RequestServerTick = {
-		Call = function(): ((number))
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 4)
-			function_call_id += 1
-			function_call_id %= 256
-			if event_queue[4][function_call_id] then
-				function_call_id -= 1
-				error("Zap has more than 256 calls awaiting a response, and therefore this packet has been dropped")
+	RemoveCharacter = {
+		SetCallback = function(Callback: (Value: ({
+			entityId: (number),
+		})) -> ()): () -> ()
+			events[4] = Callback
+			for _, value in event_queue[4] do
+				task.spawn(Callback, value)
 			end
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, function_call_id)
-			event_queue[4][function_call_id] = coroutine.running()
-			return coroutine.yield()
+			event_queue[4] = {}
+			return function()
+				events[4] = nil
+			end
 		end,
 	},
-	RequestEntities = {
-		Call = function(): ((({ ({
-			entity: (number),
-			player: (Player),
-		}) })?))
+	RequestServerTick = {
+		Call = function(): ((number))
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, 5)
 			function_call_id += 1
@@ -362,24 +339,6 @@ local returns = {
 			alloc(1)
 			buffer.writeu8(outgoing_buff, outgoing_apos, function_call_id)
 			event_queue[5][function_call_id] = coroutine.running()
-			return coroutine.yield()
-		end,
-	},
-	RequestEntityId = {
-		Call = function(player: (Player)): (((number)?))
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, 6)
-			function_call_id += 1
-			function_call_id %= 256
-			if event_queue[6][function_call_id] then
-				function_call_id -= 1
-				error("Zap has more than 256 calls awaiting a response, and therefore this packet has been dropped")
-			end
-			alloc(1)
-			buffer.writeu8(outgoing_buff, outgoing_apos, function_call_id)
-			assert(player:IsA("Player"))
-			table.insert(outgoing_inst, player)
-			event_queue[6][function_call_id] = coroutine.running()
 			return coroutine.yield()
 		end,
 	},

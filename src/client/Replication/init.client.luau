@@ -1,58 +1,28 @@
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
-local Entities = require(ReplicatedStorage.Shared.Replication.Entities)
+local Player = require(script.Parent.Player)
+local Character = require(script.Parent.Player.Character)
 local Zap = require(script.Parent.Zap)
 local Interpolation = require(ReplicatedStorage.Shared.Replication.Interpolation)
 local SnapshotBuffer = require(ReplicatedStorage.Shared.Replication.SnapshotBuffer)
 local Tick = require(ReplicatedStorage.Shared.Replication.Tick)
 local Transform = require(ReplicatedStorage.Shared.Replication.Transform)
-local Player = require(script.Parent.Player)
 
--- Local client buffer
-local localClientBuffer = SnapshotBuffer.new(Interpolation.replicationRate)
+local localPlayer = Player.getLocalPlayer(true)
+local localCharacter = localPlayer.character
+local localRoot = localCharacter.root
 
--- Other clients buffers
-local remoteClientBuffers = {} :: {SnapshotBuffer.Buffer}
-
--- Get entity updates
-local remoteClientRoots = {} :: {Instance?}
-
--- Get server tick
 local currentTime = Tick.toTimestamp(Zap.RequestServerTick.Call())
-
-print("tryna find local")
-
--- Get local root
-local localPlayer = Player.getLocalPlayer(true) :: Player.MyPlayer
-
-print("Found local")
-
 local lastTick = os.clock()
 
 local queuedTransform: Transform.Transform = {
-    x = localPlayer.root.CFrame.X,
-    y = localPlayer.root.CFrame.Y,
-    z = localPlayer.root.CFrame.Z,
-    yRotation = math.rad(localPlayer.root.Orientation.Y)
-} 
-
--- Update buffers and roots whenever an entity is added
-Entities.connect(function(entity, added)
-    if added then
-        local root = Entities.getInstance(entity) :: BasePart?
-
-        if root then
-            remoteClientRoots[entity] = root
-            remoteClientBuffers[entity] = SnapshotBuffer.new(Interpolation.replicationRate / 2)        
-        end
-    elseif not added then
-        remoteClientRoots[entity] = nil
-        remoteClientBuffers[entity] = nil
-    end    
-end)
+    x = localRoot.CFrame.X,
+    y = localRoot.CFrame.Y,
+    z = localRoot.CFrame.Z,
+    yRotation = math.rad(localRoot.Orientation.Y)
+}
 
 -- Replicate local position to server
 RunService.PostSimulation:Connect(function()
@@ -60,10 +30,10 @@ RunService.PostSimulation:Connect(function()
         lastTick = os.clock()
 
         queuedTransform = {
-            x = localPlayer.root.CFrame.X,
-            y = localPlayer.root.CFrame.Y,
-            z = localPlayer.root.CFrame.Z,
-            yRotation = math.rad(localPlayer.root.Orientation.Y)
+            x = localRoot.CFrame.X,
+            y = localRoot.CFrame.Y,
+            z = localRoot.CFrame.Z,
+            yRotation = math.rad(localRoot.Orientation.Y)
         }
 
         Zap.RequestReplication.Fire(queuedTransform)
@@ -79,14 +49,20 @@ RunService.RenderStepped:Connect(function(deltaTime: number)
 
     local renderAt = currentTime - Interpolation.bufferDelay - (Interpolation.packetFrequency)
 
-    for key, buffer in pairs(remoteClientBuffers) do
-        local snapshotA, snapshotB = SnapshotBuffer.findClosestSnapshot(buffer, renderAt)
+    for i, player in Player.getPlayers() do
+        if player == localPlayer then
+            continue
+        end
 
-        if snapshotA and snapshotB then
-            local newCFrame = Interpolation.getCFrame(snapshotA, snapshotB, renderAt)
+        if player.character and player.character.root then
+            local snapshotA, snapshotB = SnapshotBuffer.findClosestSnapshot(player.character.snapshotBuffer, renderAt)
 
-            table.insert(roots, remoteClientRoots[key])
-            table.insert(cframes, newCFrame)        
+            if snapshotA and snapshotB then
+                local newCFrame = Interpolation.getCFrame(snapshotA, snapshotB, renderAt)
+    
+                table.insert(roots, player.character.root)
+                table.insert(cframes, newCFrame)        
+            end
         end
     end
 
@@ -107,23 +83,33 @@ Zap.BroadcastReplication.SetCallback(function(data)
 
     currentTime = timestamp
 
-    if queuedTransform then
-        SnapshotBuffer.addSnapshot(localClientBuffer, {
+    if queuedTransform and localCharacter then
+        SnapshotBuffer.addSnapshot(localCharacter.snapshotBuffer, {
             timestamp = timestamp,
             transform = queuedTransform
         })    
     end
-    
-    for i, v in pairs(data.map) do
-        local transform = {
-            x = v.x, 
-            y = v.y, 
-            z = v.z,
-            yRotation = v.yRotation
-        }
 
-        if remoteClientRoots[v.entity] and remoteClientBuffers[v.entity]then
-            SnapshotBuffer.addSnapshot(remoteClientBuffers[v.entity], {
+    local characters = Character.getList()
+
+    local localEntityId = localCharacter and localCharacter.entityId
+
+    for i, data in data.map do
+        if data.entity == localEntityId then
+            continue
+        end
+
+        local character = characters[data.entity]
+
+        if character then
+            local transform = {
+                x = data.x, 
+                y = data.y, 
+                z = data.z,
+                yRotation = data.yRotation
+            }
+
+            SnapshotBuffer.addSnapshot(character.snapshotBuffer, {
                 timestamp = timestamp,
                 transform = transform
             })
