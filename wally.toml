@@ -5,4 +5,7 @@ registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 
 [dependencies]
-Future = "red-blox/future@^1.0.0"
+future = "red-blox/future@^1.0.0"
+jecs = "ukendio/jecs@0.2.3"
+planck = "yetanotherclown/planck@0.1.0-rc.1"
+planckJabby = "yetanotherclown/planck-jabby@0.1.0-rc.1"

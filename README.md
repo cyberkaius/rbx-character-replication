@@ -11,7 +11,10 @@
 - Switch from f32 to something smaller
 
 ## Zap Config
-Run `zap src/config.zap` to generate files
+Run `zap net/config.zap` to generate files
+
+## Wally Package Types
+Run with `wally-package-types --sourcemap sourcemap.json Packages/`
 
 ## Code Cleanup
 Run with `stylua .` to clean up files

@@ -1,8 +1,8 @@
 -- run after changes:
--- zap src/config.zap
+-- zap net/config.zap
 
-opt server_output = "./server/Zap/init.luau"
-opt client_output = "./client/Zap/init.luau"
+opt server_output = "./server/init.luau"
+opt client_output = "./client/init.luau"
 
 event RequestReplication = {
 	from: Client,
